@@ -11,9 +11,9 @@
   },
   "devDependencies": {
     "jsdom": "^16.5.0",
-    "jshint": "^2.11.1",
+    "jshint": "^2.13.5",
     "shelljs": "^0.8.4",
-    "uglify-js": "^2.8.29"
+    "uglify-js": "^3.17.0"
   },
   "scripts": {
     "build": "node make.js",

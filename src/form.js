@@ -1,4 +1,4 @@
-/* global Celestial, settings, globalConfig, formats, formats_all, $, px, has, isNumber, isObject, isArray, findPos, transformDeg, euler, exportSVG, parentElement */
+/* global Celestial, settings, globalConfig, formats, formats_all, $, px, has, isNumber, isObject, isArray, findPos, transformDeg, euler, exportSVG, parentElement, cfg, config */
 
 //display settings form in div with id "celestial-form"
 function form(cfg) {
@@ -148,7 +148,7 @@ function form(cfg) {
 
   names = formats.dsonames[config.culture] || formats.dsonames.iau;
 
-  for (fld in names) {
+  for (let fld in names) {
     if (!has(names, fld)) continue;
     let dsoKeys = Object.keys(names[fld]);
     col.append("label").attr("for", "dsos-" + fld).html("Show");
@@ -189,7 +189,7 @@ function form(cfg) {
 
   names = formats.constellations[config.culture] || formats.constellations.iau;
 
-  for (fld in names) {
+  for (let fld in names) {
     if (!has(names, fld)) continue;
     let nameKeys = Object.keys(names[fld]);
     if (nameKeys.length > 1) {
@@ -558,32 +558,32 @@ function enable(source) {
     /* falls through */
     case "stars-designation":
       off = !$form("stars-designation").checked || !$form("stars-show").checked;
-      for (i = 0; i < depends["stars-designation"].length; i++) { fldEnable(depends["stars-designation"][i], off); }
+      for (let i = 0; i < depends["stars-designation"].length; i++) { fldEnable(depends["stars-designation"][i], off); }
     /* falls through */
     case "stars-propername":
       off = !$form("stars-propername").checked || !$form("stars-show").checked;
-      for (i = 0; i < depends["stars-propername"].length; i++) { fldEnable(depends["stars-propername"][i], off); }
+      for (let i = 0; i < depends["stars-propername"].length; i++) { fldEnable(depends["stars-propername"][i], off); }
       break;
     case "dsos-show":
       off = !$form(fld).checked;
-      for (i = 0; i < depends[fld].length; i++) { fldEnable(depends[fld][i], off); }
+      for (let i = 0; i < depends[fld].length; i++) { fldEnable(depends[fld][i], off); }
     /* falls through */
     case "dsos-names":
       off = !$form("dsos-names").checked || !$form("dsos-show").checked;
-      for (i = 0; i < depends["dsos-names"].length; i++) { fldEnable(depends["dsos-names"][i], off); }
+      for (let i = 0; i < depends["dsos-names"].length; i++) { fldEnable(depends["dsos-names"][i], off); }
       break;
     case "planets-show":
       off = !$form(fld).checked;
-      for (i = 0; i < depends[fld].length; i++) { fldEnable(depends[fld][i], off); }
+      for (let i = 0; i < depends[fld].length; i++) { fldEnable(depends[fld][i], off); }
     /* falls through */
     case "planets-names":
       off = !$form("planets-names").checked || !$form("planets-show").checked;
-      for (i = 0; i < depends["planets-names"].length; i++) { fldEnable(depends["planets-names"][i], off); }
+      for (let i = 0; i < depends["planets-names"].length; i++) { fldEnable(depends["planets-names"][i], off); }
       break;
     case "constellations-names":
     case "mw-show":
       off = !$form(fld).checked;
-      for (i = 0; i < depends[fld].length; i++) { fldEnable(depends[fld][i], off); }
+      for (let i = 0; i < depends[fld].length; i++) { fldEnable(depends[fld][i], off); }
       break;
   }
 }
@@ -756,8 +756,8 @@ function setVisibility(cfg, which) {
 }
 
 function listConstellations() {
-  let sel = d3.select(`${parentElement} ~ #${cfg?.formcontainer ?? config?.formcontainer ?? "celestial-form"}`).select("#constellation"),
-    list = [], selected = 0, id, name, config = globalConfig;
+  let list = [], selected = 0, id, name, config = globalConfig,
+    sel = d3.select(`${parentElement} ~ #${cfg?.formcontainer ?? config?.formcontainer ?? "celestial-form"}`).select("#constellation");
 
   Celestial.container.selectAll(".constname").each(function (d, i) {
     id = d.id;

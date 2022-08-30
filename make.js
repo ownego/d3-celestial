@@ -1,22 +1,32 @@
 var shell = require('shelljs/make'),
-    ug = require('uglify-js'),
-    fs = require('fs'),
-    vm = require('vm'),
-    //tar = require('tar-fs'),
-    //zlib = require('zlib'),
-    version = require('./package.json').version,
-    copy = "// Copyright 2015-2020 Olaf Frohn https://github.com/ofrohn, see LICENSE\n",
-    begin = "!(function() {",
-    end = "this.Celestial = Celestial;\n})();",
-    filename = './celestial',
-    filelist = [
-    './src/celestial.js', 
-    './src/projection.js', 
-    './src/transform.js', 
-    './src/horizontal.js', 
+  ug = require('uglify-js'),
+  fs = require('fs'),
+  vm = require('vm'),
+  //tar = require('tar-fs'),
+  //zlib = require('zlib'),
+  version = require('./package.json').version,
+  copy = "// Copyright 2015-2020 Olaf Frohn https://github.com/ofrohn, see LICENSE\n",
+  begin = `(!function () {
+    function createCelestialFromConfig(cfg) {
+      function createCelestial() {
+    `,
+  end = `   return Celestial;
+  };
+  let Celestial = createCelestial();
+  Celestial.display(cfg);
+  return Celestial;
+}
+this.createCelestialFromConfig = createCelestialFromConfig;
+}());`,
+  filename = './celestial',
+  filelist = [
+    './src/celestial.js',
+    './src/projection.js',
+    './src/transform.js',
+    './src/horizontal.js',
     './src/add.js',
     './src/get.js',
-    './src/config.js', 
+    './src/config.js',
     './src/canvas.js',
     './src/util.js',
     './src/form.js',
@@ -27,20 +37,20 @@ var shell = require('shelljs/make'),
     './src/datetimepicker.js',
     './lib/d3.geo.zoom.js',
     './lib/d3-queue.js'
-    ],
-    FINAL = true;
+  ],
+  FINAL = true;
 
-    
-target.all = function() {
+
+target.all = function () {
   target.test();
   target.build();
 };
 
-target.test = function() {
+target.test = function () {
   cd('src');
 
   //jshint linting
-  ls("*.js").forEach(function(file) {
+  ls("*.js").forEach(function (file) {
     if (exec('jshint ' + file).code !== 0) {
       echo('JSHINT FAILED');
       exit(0);
@@ -51,39 +61,39 @@ target.test = function() {
   cd('..');
 
   //run tests
-/*  cd('test');
-  ls("*-test.js").forEach(function(file) {
-    if (exec('node ' + file).code !== 123) {
-      echo('TEST FAILED for ' + file);
-      exit(0);  
-    }
-  });
-
-  echo('Unit tests passed');
-
-  cd('..');*/
+  /*  cd('test');
+    ls("*-test.js").forEach(function(file) {
+      if (exec('node ' + file).code !== 123) {
+        echo('TEST FAILED for ' + file);
+        exit(0);  
+      }
+    });
+  
+    echo('Unit tests passed');
+  
+    cd('..');*/
 };
 
-target.build = function() {
+target.build = function () {
 
   vm.runInThisContext(fs.readFileSync('./src/celestial.js', 'utf-8'), './src/celestial.js');
   echo('V' + Celestial.version);
 
   if (!FINAL) filename += Celestial.version;
-  
+
   if (version !== Celestial.version)
     exec("npm version " + Celestial.version);
 
   var file = cat(filelist);
   file = copy + begin + file.replace(/\/\* global.*/g, '') + end;
   file.to(filename + '.js');
-  
+
   echo('Minifying');
 
   var out = ug.minify(filename + '.js');
   echo(out.error || "OK");
-  
-  fs.writeFileSync(filename + '.min.js', copy + out.code);
+
+  fs.writeFileSync(filename + '.min.js', copy + begin + out.code + end);
   /*var read = ug.parse(fs.readFileSync(filename + '.js', "utf8"));
   read.figure_out_scope();
 
