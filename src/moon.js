@@ -1,7 +1,7 @@
 ﻿/* global Trig, deg2rad */
-var Moon = {
+let Moon = {
   elements: function(dat) {
-    var t = (dat.jd - 2451545) / 36525,
+    let t = (dat.jd - 2451545) / 36525,
         t2 = t * t,
         t3 = t * t2,
         t4 = t * t3,
@@ -11,7 +11,7 @@ var Moon = {
         t4e8 = t4 * 1e-8;
 
     // semimajor axis
-    var sa = 3400.4 * Math.cos(deg2rad * (235.7004 + 890534.2230 * t - 32.601 * t2e4 
+    let sa = 3400.4 * Math.cos(deg2rad * (235.7004 + 890534.2230 * t - 32.601 * t2e4 
         + 3.664 * t3e6 - 1.769 * t4e8)) 
         - 635.6 * Math.cos(deg2rad * (100.7370 + 413335.3554 * t - 122.571 * t2e4 
         - 10.684 * t3e6 + 5.028 * t4e8)) 
@@ -72,15 +72,15 @@ var Moon = {
         + 1.3 * Math.cos(deg2rad * (325.7736 - 63863.5122 * t - 212.541 * t2e4 
         - 25.031 * t3e6 + 11.826 * t4e8));
 
-    var sapp = - 0.55 * Math.cos(deg2rad * (238.2 + 854535.2 * t)) 
+    let sapp = - 0.55 * Math.cos(deg2rad * (238.2 + 854535.2 * t)) 
         + 0.10 * Math.cos(deg2rad * (103.2 + 377336.3 * t)) 
         + 0.10 * Math.cos(deg2rad * (233.2 + 926533.3 * t));
 
-    var sma = 383397.6 + sa + sapp * t;
+    let sma = 383397.6 + sa + sapp * t;
 
     // orbital eccentricity
 
-    var se = 0.014217 * Math.cos(deg2rad * (100.7370 + 413335.3554 * t - 122.571 * t2e4 
+    let se = 0.014217 * Math.cos(deg2rad * (100.7370 + 413335.3554 * t - 122.571 * t2e4 
         - 10.684 * t3e6 + 5.028 * t4e8)) 
         + 0.008551 * Math.cos(deg2rad * (325.7736 - 63863.5122 * t - 212.541 * t2e4 
         - 25.031 * t3e6 + 11.826 * t4e8)) 
@@ -171,13 +171,13 @@ var Moon = {
         - 0.000026 * Math.cos(deg2rad * (8.1929 + 1403732.1410 * t + 55.834 * t2e4 
         + 18.052 * t3e6 - 8.566 * t4e8));
 
-    var sedp = -0.0022 * Math.cos(deg2rad * (103.2 + 377336.3 * t));
+    let sedp = -0.0022 * Math.cos(deg2rad * (103.2 + 377336.3 * t));
 
-    var ecc = 0.055544 + se + 1e-3 * t * sedp;
+    let ecc = 0.055544 + se + 1e-3 * t * sedp;
 
     // sine of half the inclination
 
-    var sg = 0.0011776 * Math.cos(deg2rad * (49.1562 - 75869.8120 * t + 35.458 * t2e4 
+    let sg = 0.0011776 * Math.cos(deg2rad * (49.1562 - 75869.8120 * t + 35.458 * t2e4 
         + 4.231 * t3e6 - 2.001 * t4e8)) 
         - 0.0000971 * Math.cos(deg2rad * (235.7004 + 890534.2230 * t - 32.601 * t2e4 
         + 3.664 * t3e6 - 1.769 * t4e8)) 
@@ -214,14 +214,14 @@ var Moon = {
         + 0.0000024 * Math.cos(deg2rad * (170.9849 - 930404.9848 * t + 66.523 * t2e4 
         + 0.608 * t3e6 - 0.232 * t4e8));
 
-    var sgp = - 0.0203 * Math.cos(deg2rad * (125.0 - 1934.1 * t)) 
+    let sgp = - 0.0203 * Math.cos(deg2rad * (125.0 - 1934.1 * t)) 
         + 0.0034 * Math.cos(deg2rad * (220.2 - 1935.5 * t));
 
-    var gamma = 0.0449858 + sg + 1e-3 * sgp;
+    let gamma = 0.0449858 + sg + 1e-3 * sgp;
 
     // longitude of perigee
 
-    var sp = - 15.448 * Math.sin(deg2rad * (100.7370 + 413335.3554 * t - 122.571 * t2e4 
+    let sp = - 15.448 * Math.sin(deg2rad * (100.7370 + 413335.3554 * t - 122.571 * t2e4 
         - 10.684 * t3e6 + 5.028 * t4e8))
         - 9.642 * Math.sin(deg2rad * (325.7736 - 63863.5122 * t - 212.541 * t2e4 
         - 25.031 * t3e6 + 11.826 * t4e8)) 
@@ -338,14 +338,14 @@ var Moon = {
         + 0.031 * Math.sin(deg2rad * (87.6023 - 918398.6850 * t - 181.476 * t2e4 
         - 28.654 * t3e6 + 13.594 * t4e8));
 
-    var spp = 2.4 * Math.sin(deg2rad * (103.2 + 377336.3 * t));
+    let spp = 2.4 * Math.sin(deg2rad * (103.2 + 377336.3 * t));
 
-    var lp = 83.353 + 4069.0137 * t - 103.238 * t2e4 
+    let lp = 83.353 + 4069.0137 * t - 103.238 * t2e4 
         - 12.492 * t3e6 + 5.263 * t4e8 + sp + 1e-3 * t * spp;
 
     // longitude of the ascending node
 
-    var sr = - 1.4979 * Math.sin(deg2rad * (49.1562 - 75869.8120 * t + 35.458 * t2e4 
+    let sr = - 1.4979 * Math.sin(deg2rad * (49.1562 - 75869.8120 * t + 35.458 * t2e4 
         + 4.231 * t3e6 - 2.001 * t4e8)) 
         - 0.1500 * Math.sin(deg2rad * (357.5291 + 35999.0503 * t - 1.536 * t2e4 
         + 0.041 * t3e6 + 0.000 * t4e8)) 
@@ -390,18 +390,18 @@ var Moon = {
         + 0.0028 * Math.sin(deg2rad * (184.0733 + 1002403.0853 * t - 69.594 * t2e4 
         - 0.526 * t3e6 + 0.232 * t4e8));
 
-    var srp = 25.9 * Math.sin(deg2rad * (125.0 - 1934.1 * t)) 
+    let srp = 25.9 * Math.sin(deg2rad * (125.0 - 1934.1 * t)) 
         - 4.3 * Math.sin(deg2rad * (220.2 - 1935.5 * t));
 
-    var srpp = 0.38 * Math.sin(deg2rad * (357.5 + 35999.1 * t));
+    let srpp = 0.38 * Math.sin(deg2rad * (357.5 + 35999.1 * t));
 
-    var raan = 125.0446 - 1934.13618 * t + 20.762 * t2e4 
+    let raan = 125.0446 - 1934.13618 * t + 20.762 * t2e4 
         + 2.139 * t3e6 - 1.650 * t4e8 + sr 
         + 1e-3 * (srp + srpp * t);
 
     // mean longitude
 
-    var sl = - 0.92581 * Math.sin(deg2rad * (235.7004 + 890534.2230 * t - 32.601 * t2e4 
+    let sl = - 0.92581 * Math.sin(deg2rad * (235.7004 + 890534.2230 * t - 32.601 * t2e4 
         + 3.664 * t3e6 - 1.769 * t4e8)) 
         + 0.33262 * Math.sin(deg2rad * (100.7370 + 413335.3554 * t - 122.571 * t2e4 
         - 10.684 * t3e6 + 5.028 * t4e8)) 
@@ -478,19 +478,19 @@ var Moon = {
         + 0.00030 * Math.sin(deg2rad * (160.4159 + 4067.2942 * t - 107.806 * t2e4 
         - 12.475 * t3e6 + 5.913 * t4e8));
 
-    var slp = 3.96 * Math.sin(deg2rad * (119.7 + 131.8 * t)) 
+    let slp = 3.96 * Math.sin(deg2rad * (119.7 + 131.8 * t)) 
         + 1.96 * Math.sin(deg2rad * (125.0 - 1934.1 * t));
 
-    var slpp = 0.463 * Math.sin(deg2rad * (357.5 + 35999.1 * t)) 
+    let slpp = 0.463 * Math.sin(deg2rad * (357.5 + 35999.1 * t)) 
         + 0.152 * Math.sin(deg2rad * (238.2 + 854535.2 * t)) 
         - 0.071 * Math.sin(deg2rad * (27.8 + 131.8 * t)) 
         - 0.055 * Math.sin(deg2rad * (103.2 + 377336.3 * t)) 
         - 0.026 * Math.sin(deg2rad * (233.2 + 926533.3 * t));
 
-    var slppp = 14 * Math.sin(deg2rad * (357.5 + 35999.1 * t)) 
+    let slppp = 14 * Math.sin(deg2rad * (357.5 + 35999.1 * t)) 
         + 5 * Math.sin(deg2rad * (238.2 + 854535.2 * t));
 
-    var lambda = 218.31665 + 481267.88134 * t - 13.268 * t2e4 
+    let lambda = 218.31665 + 481267.88134 * t - 13.268 * t2e4 
         + 1.856 * t3e6 - 1.534 * t4e8 + sl 
         + 1e-3 * (slp + slpp * t + slppp * t2e4);
 
@@ -503,12 +503,12 @@ var Moon = {
      return dat;
   },
   corr: function(dat, sol) {
-    var M = Trig.normalize(sol.M + Math.PI),
+    let M = Trig.normalize(sol.M + Math.PI),
         w = Trig.normalize(sol.w + Math.PI),
         L = dat.M + dat.w,     // Argument of latitude 
         E = L + dat.N - M - w; // Mean elongation
     
-    var lon = 
+    let lon = 
       -0.022234 * Math.sin(dat.M - 2*E) +  // Evection
        0.011494 * Math.sin(2*E) +          // Variation
       -0.003246 * Math.sin(M) +        // Yearly Equation
@@ -522,7 +522,7 @@ var Moon = {
       -2.61799e-4 * Math.sin(2*L - 2*E) +
        1.91986e-4 * Math.sin(dat.M - 4*E);
     dat.ra += lon;
-    var lat =
+    let lat =
       -0.003019 * Math.sin(L - 2*E) +
       -9.59931e-4 * Math.sin(dat.M - L - 2*E) +
       -8.02851e-4 * Math.sin(dat.M + L - 2*E) +

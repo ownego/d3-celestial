@@ -10,18 +10,18 @@ function has(o, key) { return o !== null && hasOwnProperty.call(o, key); }
 function when(o, key, val) { return o !== null && hasOwnProperty.call(o, key) ? o[key] : val; }
 function isNumber(n) { return n !== null && !isNaN(parseFloat(n)) && isFinite(n); }
 function isArray(o) { return o !== null && Object.prototype.toString.call(o) === "[object Array]"; }
-function isObject(o) { var type = typeof o;  return type === 'function' || type === 'object' && !!o; }
+function isObject(o) { let type = typeof o;  return type === 'function' || type === 'object' && !!o; }
 function isFunction(o) { return typeof o == 'function' || false; }
 function isValidDate(d) { return d && d instanceof Date && !isNaN(d); }
 function fileExists(url) {
-  var http = new XMLHttpRequest();
+  let http = new XMLHttpRequest();
   http.open('HEAD', url, false);
   http.send();
   return http.status != 404;
 }
 
 function findPos(o) {
-  var l = 0, t = 0;
+  let l = 0, t = 0;
   if (o.offsetParent) {
     do {
       l += o.offsetLeft;
@@ -50,7 +50,7 @@ function stopPropagation(e) {
 }
 
 function dateDiff(dt1, dt2, type) {
-  var diff = dt2.valueOf() - dt1.valueOf(),
+  let diff = dt2.valueOf() - dt1.valueOf(),
       tp = type || "d";
   switch (tp) {
     case 'y': case 'yr': diff /= 31556926080; break;
@@ -66,7 +66,7 @@ function dateDiff(dt1, dt2, type) {
 
 function dateParse(s) {
   if (!s) return; 
-  var t = s.split(".");
+  let t = s.split(".");
   if (t.length < 1) return; 
   t = t[0].split("-");
   t[0] = t[0].replace(/\D/g, "");
@@ -88,7 +88,7 @@ function interpolateAngle(a1, a2, t) {
   return d3.interpolateNumber(a1/deg2rad, a2/deg2rad);
 }
 
-var Trig = {
+let Trig = {
   sinh: function (val) { return (Math.pow(Math.E, val)-Math.pow(Math.E, -val))/2; },
   cosh: function (val) { return (Math.pow(Math.E, val)+Math.pow(Math.E, -val))/2; },
   tanh: function (val) { return 2.0 / (1.0 + Math.exp(-2.0 * val)) - 1.0; },
@@ -97,11 +97,11 @@ var Trig = {
   normalize0: function(val) {  return ((val + Math.PI*3) % (Math.PI*2)) - Math.PI; },
   normalize: function(val) {  return ((val + Math.PI*2) % (Math.PI*2)); },  
   cartesian: function(p) {
-    var ϕ = p[0], θ = halfπ - p[1], r = p[2];
+    let ϕ = p[0], θ = halfπ - p[1], r = p[2];
     return {"x": r * Math.sin(θ) * Math.cos(ϕ), "y": r * Math.sin(θ) * Math.sin(ϕ), "z": r * Math.cos(θ)};
   },
   spherical: function(p) {
-    var r = Math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z),
+    let r = Math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z),
         θ = Math.atan(p.y / p.x),
         ϕ = Math.acos(p.z / r);
     return  [θ / deg2rad, ϕ / deg2rad, r];
@@ -111,13 +111,13 @@ var Trig = {
   }
 };
 
-var epsilon = 1e-6, 
+let epsilon = 1e-6, 
     halfPi =  Math.PI / 2, 
     quarterPi =  Math.PI / 4, 
     tau =  Math.PI * 2;
     
 function cartesian(spherical) {
-  var lambda = spherical[0], phi = spherical[1], cosPhi = Math.cos(phi);
+  let lambda = spherical[0], phi = spherical[1], cosPhi = Math.cos(phi);
   return [cosPhi * Math.cos(lambda), cosPhi * Math.sin(lambda), Math.sin(phi)];
 }
 
@@ -126,7 +126,7 @@ function cartesianCross(a, b) {
 }
 
 function cartesianNormalizeInPlace(d) {
-  var l = Math.sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+  let l = Math.sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
   d[0] /= l; d[1] /= l; d[2] /= l;
 }
 
@@ -138,7 +138,7 @@ function longitude(point) {
 }
 
 function poligonContains(polygon, point) {
-  var lambda = longitude(point),
+  let lambda = longitude(point),
       phi = point[1],
       sinPhi = Math.sin(phi),
       normal = [Math.sin(lambda), -Math.cos(lambda), 0],
@@ -149,9 +149,9 @@ function poligonContains(polygon, point) {
   if (sinPhi === 1) phi = halfPi + epsilon;
   else if (sinPhi === -1) phi = -halfPi - epsilon;
 
-  for (var i = 0, n = polygon.length; i < n; ++i) {
+  for (let i = 0, n = polygon.length; i < n; ++i) {
     if (!(m = (ring = polygon[i]).length)) continue;
-    var ring,
+    let ring,
         m,
         point0 = ring[m - 1],
         lambda0 = longitude(point0),
@@ -160,13 +160,13 @@ function poligonContains(polygon, point) {
         cosPhi0 = Math.cos(phi0),
         point1, cosPhi1, sinPhi1, lambda1;
 
-    for (var j = 0; j < m; ++j, lambda0 = lambda1, sinPhi0 = sinPhi1, cosPhi0 = cosPhi1, point0 = point1) {
+    for (let j = 0; j < m; ++j, lambda0 = lambda1, sinPhi0 = sinPhi1, cosPhi0 = cosPhi1, point0 = point1) {
       point1 = ring[j];
       lambda1 = longitude(point1);
-      var phi1 = point1[1] / 2 + quarterPi;
+      let phi1 = point1[1] / 2 + quarterPi;
       sinPhi1 = Math.sin(phi1);
       cosPhi1 = Math.cos(phi1);
-      var delta = lambda1 - lambda0,
+      let delta = lambda1 - lambda0,
           sign = delta >= 0 ? 1 : -1,
           absDelta = sign * delta,
           antimeridian = absDelta > Math.PI,
@@ -176,11 +176,11 @@ function poligonContains(polygon, point) {
       angle += antimeridian ? delta + sign * tau : delta;
 
       if ((antimeridian ^ lambda0) >= (lambda ^ lambda1) >= lambda) {
-        var arc = cartesianCross(cartesian(point0), cartesian(point1));
+        let arc = cartesianCross(cartesian(point0), cartesian(point1));
         cartesianNormalizeInPlace(arc);
-        var intersection = cartesianCross(normal, arc);
+        let intersection = cartesianCross(normal, arc);
         cartesianNormalizeInPlace(intersection);
-        var phiArc = (antimeridian ^ delta >= 0 ? -1 : 1) * Math.asin(intersection[2]);
+        let phiArc = (antimeridian ^ delta >= 0 ? -1 : 1) * Math.asin(intersection[2]);
         if (phi > phiArc || phi === phiArc && (arc[0] || arc[1])) {
           winding += antimeridian ^ delta >= 0 ? 1 : -1;
         }

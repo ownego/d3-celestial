@@ -1,25 +1,26 @@
 /* global Celestial, settings, horizontal, datetimepicker, config, formats, $, $form, pad, testNumber, isArray, isNumber, isValidDate, showAdvanced, enable, Round, has, hasParent, parentElement */
 
-var geoInfo = null;
+let geoInfo = null;
 
 function geo(cfg) {
-  var dtFormat = d3.time.format("%Y-%m-%d %H:%M:%S"),
+  let dtFormat = d3.time.format("%Y-%m-%d %H:%M:%S"),
       zenith = [0,0],
       geopos = [0,0], 
       date = new Date(),
       localZone = -date.getTimezoneOffset(),
       timeZone = localZone,
       config = settings.set(cfg),
-      frm = d3.select(parentElement + " ~ #celestial-form form").insert("div", "div#general").attr("id", "loc");
+      formContainer = `${parentElement} ~ #${config.formcontainer ?? "celestial-form"}`,
+      frm = d3.select(`${formContainer} form`).insert("div", "div#general").attr("id", "loc");
 
-  var dtpick = new datetimepicker(config, function(date, tz) { 
+  let dtpick = new datetimepicker(config, function(date, tz) { 
     $form("datetime").value = dateFormat(date, tz); 
     timeZone = tz;
     go(); 
   });
   
   if (has(config, "geopos") && config.geopos !== null && config.geopos.length === 2) geopos = config.geopos;
-  var col = frm.append("div").attr("class", "col").attr("id", "location").style("display", "none");
+  let col = frm.append("div").attr("class", "col").attr("id", "location").style("display", "none");
   //Latitude & longitude fields
   col.append("label").attr("title", "Location coordinates long/lat").attr("for", "lat").html("Location");
   col.append("input").attr("type", "number").attr("id", "lat").attr("title", "Latitude").attr("placeholder", "Latitude").attr("max", "90").attr("min", "-90").attr("step", "0.0001").attr("value", geopos[0]).on("change",  function () {
@@ -66,20 +67,20 @@ function geo(cfg) {
   col.append("label").attr("title", "Show solar system objects").attr("for", "planets-show").html(" Planets, Sun & Moon");
   col.append("input").attr("type", "checkbox").attr("id", "planets-show").property("checked", config.planets.show).on("change", apply);    
   //Planet names
-  var names = formats.planets[config.culture] || formats.planets.iau;
+  let names = formats.planets[config.culture] || formats.planets.iau;
   
-  for (var fld in names) {
+  for (let fld in names) {
     if (!has(names, fld)) continue;
-    var keys = Object.keys(names[fld]);
+    let keys = Object.keys(names[fld]);
     if (keys.length > 1) {
       //Select List
-      var txt = (fld === "symbol") ? "as" : "with";
+      let txt = (fld === "symbol") ? "as" : "with";
       col.append("label").attr("for", "planets-" + fld + "Type").html(txt);
       
-      var selected = 0;
+      let selected = 0;
       col.append("label").attr("title", "Type of planet name").attr("for", "planets-" + fld + "Type").attr("class", "advanced").html("");
-      var sel = col.append("select").attr("id", "planets-" + fld + "Type").on("change", apply);
-      var list = keys.map(function (key, i) {
+      let sel = col.append("select").attr("id", "planets-" + fld + "Type").on("change", apply);
+      let list = keys.map(function (key, i) {
         if (key === config.planets[fld + "Type"]) selected = i;    
         return {o:key, n:names[fld][key]}; 
       });
@@ -100,8 +101,8 @@ function geo(cfg) {
   showAdvanced(config.advanced);
   
 
-  d3.select(document).on("mousedown", function () { 
-    if (!hasParent(d3.event.target, "celestial-date") && dtpick.isVisible()) dtpick.hide(); 
+  document.addEventListener("mousedown", function (event) { 
+    if (!hasParent(event.target, `${config?.datetimepicker ?? "celestial-date"}`) && dtpick.isVisible()) dtpick.hide(); 
   });
   
   function now() {
@@ -124,10 +125,10 @@ function geo(cfg) {
   }
   
   function dateFormat(dt, tz) {
-    var tzs;
+    let tzs;
     if (!tz || tz === "0") tzs = " ±0000";
     else {
-      var h = Math.floor(Math.abs(tz) / 60),
+      let h = Math.floor(Math.abs(tz) / 60),
           m = Math.abs(tz) - (h * 60),
           s = tz > 0 ? " +" : " −";
       tzs = s + pad(h) + pad(m);
@@ -164,7 +165,7 @@ function geo(cfg) {
   }
 
   function go() {
-    var lon = parseFloat($form("lon").value),
+    let lon = parseFloat($form("lon").value),
         lat = parseFloat($form("lat").value),
         tz;
     //Get current configuration
@@ -183,7 +184,7 @@ function geo(cfg) {
       //if (!tz) tz = date.getTimezoneOffset();
       $form("datetime").value = dateFormat(date, timeZone); 
 
-      var dtc = new Date(date.valueOf() - (timeZone - localZone) * 60000);
+      let dtc = new Date(date.valueOf() - (timeZone - localZone) * 60000);
 
       zenith = Celestial.getPoint(horizontal.inverse(dtc, [90, 0], geopos), config.transform);
       zenith[2] = 0;
@@ -198,7 +199,7 @@ function geo(cfg) {
   
   function setPosition(p, settime) {
     if (!p || !has(config, "settimezone") || config.settimezone === false) return;
-    var timestamp = Math.floor(date.getTime() / 1000),
+    let timestamp = Math.floor(date.getTime() / 1000),
         protocol = window && window.location.protocol === "https:" ? "https" : "http",
         url = protocol + "://api.timezonedb.com/v2.1/get-time-zone?key=" + config.timezoneid + "&format=json&by=position" + 
               "&lat=" + p[0] + "&lng=" + p[1] + "&time=" + timestamp;
@@ -260,7 +261,7 @@ function geo(cfg) {
   //{"date":dt, "location":loc, "timezone":tz}
   Celestial.skyview = function (cfg) {
     if (!cfg) return {"date": date, "location": geopos, "timezone": timeZone};
-    var valid = false;
+    let valid = false;
     if (dtpick.isVisible()) dtpick.hide();
     if (has(cfg, "timezone") && isValidTimezone(cfg.timezone)) {
       timeZone = cfg.timezone;
@@ -288,14 +289,14 @@ function geo(cfg) {
   Celestial.dtLoc = Celestial.skyview;
   Celestial.zenith = function () { return zenith; };
   Celestial.nadir = function () {
-    var b = -zenith[1],
+    let b = -zenith[1],
         l = zenith[0] + 180;
     if (l > 180) l -= 360;    
     return [l, b-0.001]; 
   };
 
   if (has(config, "formFields") && (config.location === true || config.formFields.location === true)) {
-    d3.select(parentElement + " ~ #celestial-form").select("#location").style( {"display": "inline-block"} );
+    d3.select(formContainer).select("#location").style( {"display": "inline-block"} );
   }
   //only if appropriate
   if (isValidLocation(geopos) && (config.location === true || config.formFields.location === true) && config.follow === "zenith")

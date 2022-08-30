@@ -1,6 +1,6 @@
 /* global d3, Celestial, projections, poles, getData, getPlanet, getMwbackground, getAngles, getWidth, getGridValues, has, isArray, halfπ, symbols, starnames, dsonames, bvcolor, settings, formats, transformDeg, euler, Round */
 function exportSVG(fname) {
-  var doc = d3.select("body").append("div").attr("id", "d3-celestial-svg").attr("style", "display: none"),
+  let doc = d3.select("body").append("div").attr("id", "d3-celestial-svg").attr("style", "display: none"),
       svg = d3.select("#d3-celestial-svg").append("svg"), //.attr("style", "display: none"),
       m = Celestial.metrics(),
       cfg = settings.set(),
@@ -16,7 +16,7 @@ function exportSVG(fname) {
 
   svg.selectAll("*").remove();
 
-  var defs = svg.append("defs");
+  let defs = svg.append("defs");
 
   if (proj.clip) {
     projection.clipAngle(90);
@@ -26,23 +26,23 @@ function exportSVG(fname) {
   svg.attr("width", m.width).attr("height", m.height);
   // .attr("viewBox", " 0 0 " + (m.width) + " " + (m.height));
 
-  var groupNames = ['background', 'milkyWay', 'milkyWayBg', 'gridLines', 'constBoundaries', 
+  let groupNames = ['background', 'milkyWay', 'milkyWayBg', 'gridLines', 'constBoundaries', 
                     'planesequatorial', 'planesecliptic', 'planesgalactic', 'planessupergalactic',
                     'constLines', 'mapBorder','stars', 'dsos', 'planets', 'gridvaluesLon', 'gridvaluesLat', 
                     'constNames', 'starDesignations', 'starNames', 'dsoNames', 'planetNames', 'horizon', 'daylight'],
                 groups = {}, styles = {};
 
-  for (var i=0; i<groupNames.length; i++) {
+  for (let i=0; i<groupNames.length; i++) {
      // inkscape:groupmode="layer", inkscape:label="Ebene 1" 
     groups[groupNames[i]] = svg.append('g').attr({"id": groupNames[i], ":inkscape:groupmode": "layer", ":inkscape:label": groupNames[i]});
     styles[groupNames[i]] = {};
   }
 
-  var graticule = d3.geo.graticule().minorStep([15,10]);
+  let graticule = d3.geo.graticule().minorStep([15,10]);
   
-  var map = d3.geo.path().projection(projection);
+  let map = d3.geo.path().projection(projection);
 
-  var q = d3.queue(2);
+  let q = d3.queue(2);
   
   groups.background.append("path").datum(circle).attr("class", "background").attr("d", map); 
   styles.background.fill = cfg.background.fill;
@@ -58,7 +58,7 @@ function exportSVG(fname) {
       styles.gridLines = svgStyle(cfg.lines.graticule);
     }
     if (has(cfg.lines.graticule, "lon") && cfg.lines.graticule.lon.pos.length > 0) {
-      var jlon = {type: "FeatureCollection", features: getGridValues("lon", cfg.lines.graticule.lon.pos)};      
+      let jlon = {type: "FeatureCollection", features: getGridValues("lon", cfg.lines.graticule.lon.pos)};      
       groups.gridvaluesLon.selectAll(".gridvalues_lon")
         .data(jlon.features)
         .enter().append("text")
@@ -68,7 +68,7 @@ function exportSVG(fname) {
       styles.gridvaluesLon = svgTextStyle(cfg.lines.graticule.lon); 
     }
     if (has(cfg.lines.graticule, "lat") && cfg.lines.graticule.lat.pos.length > 0) {
-      var jlat = {type: "FeatureCollection", features: getGridValues("lat", cfg.lines.graticule.lat.pos)};
+      let jlat = {type: "FeatureCollection", features: getGridValues("lat", cfg.lines.graticule.lat.pos)};
       groups.gridvaluesLat.selectAll(".gridvalues_lat")
         .data(jlat.features)
         .enter().append("text")
@@ -80,7 +80,7 @@ function exportSVG(fname) {
   }
 
   //Celestial planes
-  for (var key in cfg.lines) {
+  for (let key in cfg.lines) {
     if (has(cfg.lines, key) && key != "graticule" && cfg.lines[key].show !== false) { 
       id = "planes" + key;
       groups[id].append("path")
@@ -96,8 +96,8 @@ function exportSVG(fname) {
     q.defer(function(callback) { 
       d3.json(path + "mw.json", function(error, json) {
         if (error) callback(error);
-        var mw = getData(json, cfg.transform);
-        var mw_back = getMwbackground(mw);
+        let mw = getData(json, cfg.transform);
+        let mw_back = getMwbackground(mw);
         
         groups.milkyWay.selectAll(".mway")
          .data(mw.features)
@@ -126,9 +126,9 @@ function exportSVG(fname) {
       d3.json(path + filename("constellations", "borders"), function(error, json) {
         if (error) callback(error);
 
-        var conb = getData(json, cfg.transform);
+        let conb = getData(json, cfg.transform);
         if (Celestial.constellation) {
-          var re = new RegExp("\\b" + Celestial.constellation + "\\b");
+          let re = new RegExp("\\b" + Celestial.constellation + "\\b");
         }
 
         groups.constBoundaries.selectAll(".bounds")
@@ -155,14 +155,14 @@ function exportSVG(fname) {
       d3.json(path + filename("constellations", "lines"), function(error, json) {
         if (error) callback(error);
 
-        var conl = getData(json, cfg.transform);
+        let conl = getData(json, cfg.transform);
         groups.constLines.selectAll(".lines")
          .data(conl.features)
          .enter().append("path")
          .attr("class", function(d) { return "constLines" + d.properties.rank; })
          .attr("d", map);
 
-        var dasharray = has(cfg.constellations.lineStyle, "dash") ? cfg.constellations.lineStyle.dash.join(" ") : "none";
+        let dasharray = has(cfg.constellations.lineStyle, "dash") ? cfg.constellations.lineStyle.dash.join(" ") : "none";
          
         styles.constLines1 = {"fill": "none", "stroke": cfg.constellations.lineStyle.stroke[0],
                               "stroke-width": cfg.constellations.lineStyle.width[0],
@@ -183,7 +183,7 @@ function exportSVG(fname) {
 
   // Map border
   q.defer(function(callback) {
-    var rot = projection.rotate();
+    let rot = projection.rotate();
     projection.rotate([0,0,0]);
     groups.mapBorder.append("path")
      .datum(graticule.outline)
@@ -202,7 +202,7 @@ function exportSVG(fname) {
       d3.json(path + filename("constellations"), function(error, json) {
         if (error) callback(error);
 
-        var conn = getData(json, cfg.transform);
+        let conn = getData(json, cfg.transform);
         groups.constNames.selectAll(".constnames")
          .data(conn.features.filter( function(d) {
             return clip(d.geometry.coordinates) === 1; 
@@ -235,7 +235,7 @@ function exportSVG(fname) {
       d3.json(path +  cfg.stars.data, function(error, json) {
         if (error) callback(error);
 
-        var cons = getData(json, cfg.transform);
+        let cons = getData(json, cfg.transform);
         
         groups.stars.selectAll(".stars")
           .data(cons.features.filter( function(d) {
@@ -248,7 +248,7 @@ function exportSVG(fname) {
           }));
 
         styles.stars = svgStyle(cfg.stars.style);
-        var range = bvcolor.domain();
+        let range = bvcolor.domain();
         for (i=Round(range[1],1); i<=Round(range[0],1); i+=0.1) {
           styles["stars" + Math.round(i*10).toString()] = {"fill": bvcolor(i)};
         }
@@ -287,7 +287,7 @@ function exportSVG(fname) {
       d3.json(path +  cfg.dsos.data, function(error, json) {
         if (error) callback(error);
 
-        var cond = getData(json, cfg.transform);
+        let cond = getData(json, cfg.transform);
         
         groups.dsos.selectAll(".dsos")
           .data(cond.features.filter( function(d) {
@@ -347,12 +347,12 @@ function exportSVG(fname) {
   //Planets
   if ((cfg.location || cfg.formFields.location) && cfg.planets.show && Celestial.origin) {
     q.defer(function(callback) {
-      var dt = Celestial.date(),
+      let dt = Celestial.date(),
           o = Celestial.origin(dt).spherical(),
           jp = {type: "FeatureCollection", features: []},
           jlun = {type: "FeatureCollection", features: []};
       Celestial.container.selectAll(".planet").each(function(d) {
-        var id = d.id(), r = 12,
+        let id = d.id(), r = 12,
             p = d(dt).equatorial(o);
             
         p.ephemeris.pos = transformDeg(p.ephemeris.pos, euler[cfg.transform]);  //transform; 
@@ -369,7 +369,7 @@ function exportSVG(fname) {
          .enter().append("path")
          .attr("transform", function(d) { return point(d.geometry.coordinates); })
          .attr("d", function(d) { 
-           var r = (has(cfg.planets.symbols[d.id], "size")) ? (cfg.planets.symbols[d.id].size - 1) * adapt : null;
+           let r = (has(cfg.planets.symbols[d.id], "size")) ? (cfg.planets.symbols[d.id].size - 1) * adapt : null;
            return planetSymbol(d.properties, r); 
          })
          .attr("class", function(d) { return "planets " + d.id; });
@@ -393,7 +393,7 @@ function exportSVG(fname) {
            .attr("class", function(d) { return "planets " + d.id; })
            .attr({dy: ".35em"});
         } else {
-          var rl = has(cfg.planets.symbols.lun, "size") ? (cfg.planets.symbols.lun.size - 1) * adapt : 11 * adapt; 
+          let rl = has(cfg.planets.symbols.lun, "size") ? (cfg.planets.symbols.lun.size - 1) * adapt : 11 * adapt; 
           groups.planets.selectAll(".dmoon")
            .data(jlun.features)
            .enter().append("path")
@@ -444,9 +444,9 @@ function exportSVG(fname) {
   
   if ((cfg.location || cfg.formFields.location) && cfg.daylight.show && proj.clip) {
     q.defer(function(callback) {
-      var sol = getPlanet("sol");
+      let sol = getPlanet("sol");
       if (sol) {
-        var up = Celestial.zenith(),
+        let up = Celestial.zenith(),
             solpos = sol.ephemeris.pos,
             dist = d3.geo.distance(up, solpos),
             pt = projection(solpos),
@@ -472,7 +472,7 @@ function exportSVG(fname) {
 
   if ((cfg.location || cfg.formFields.location) && cfg.horizon.show && !proj.clip) {
     q.defer(function(callback) {
-      var horizon = d3.geo.circle().angle([90]).origin(Celestial.nadir());
+      let horizon = d3.geo.circle().angle([90]).origin(Celestial.nadir());
      
       groups.horizon.append("path").datum(horizon)
        .attr("class", "horizon")
@@ -504,14 +504,14 @@ function exportSVG(fname) {
   }
     
   function filename(what, sub, ext) {
-    var cult = (has(formats[what], culture)) ? "." + culture : "";
+    let cult = (has(formats[what], culture)) ? "." + culture : "";
     ext = ext ? "." + ext : ".json";
     sub = sub ? "." + sub : "";
     return what + sub + cult + ext;
   }
 
   function svgStyle(s) {
-    var res = {};
+    let res = {};
     res.fill = s.fill || "none";
     res["fill-opacity"] = s.opacity !== null ? s.opacity : 1;  
     res.stroke = s.stroke || "none";
@@ -524,7 +524,7 @@ function exportSVG(fname) {
   }
 
   function svgTextStyle(s) {
-    var res = {};
+    let res = {};
     res.stroke = "none";
     res.fill = s.fill || "none";
     res["fill-opacity"] = s.opacity !== null ? s.opacity : 1;  
@@ -535,7 +535,7 @@ function exportSVG(fname) {
   }
 
   function svgStyleA(rank, s) {
-    var res = {};
+    let res = {};
     rank = rank || 1;
     res.fill = isArray(s.fill) ? s.fill[rank-1] : null;
     res["fill-opacity"] = isArray(s.opacity) ? s.opacity[rank-1] : 1;  
@@ -549,7 +549,7 @@ function exportSVG(fname) {
   }
 
   function svgSkyStyle(dist, pt) {
-    var factor, color1, color2, color3,
+    let factor, color1, color2, color3,
         upper = 1.36, 
         lower = 1.885;
     
@@ -567,7 +567,7 @@ function exportSVG(fname) {
       color3 = d3.interpolateLab("#57b0c8", "#6caae2")(factor);
     }
 
-    var gradient = groups.daylight.append("radialGradient")
+    let gradient = groups.daylight.append("radialGradient")
      .attr("cx", pt[0])
      .attr("cy", pt[1])
      .attr("fr", "0")
@@ -596,7 +596,7 @@ function exportSVG(fname) {
   }
 
   function dsoSymbol(p) {
-    var size = dsoSize(p.mag, p.dim) || 9,
+    let size = dsoSize(p.mag, p.dim) || 9,
         type = dsoShape(p.type);
     if (d3.svg.symbolTypes.indexOf(type) !== -1) {
       return d3.svg.symbol().type(type).size(size)();
@@ -617,7 +617,7 @@ function exportSVG(fname) {
  
   function dsoName(d) {
     //return p[cfg.dsos.namesType]; 
-    var lang = cfg.dsos.namesType, id = d.id;
+    let lang = cfg.dsos.namesType, id = d.id;
     if (lang === "desig" || !has(dsonames, id)) return d.properties.desig;
     return has(dsonames[id], lang) ? dsonames[id][lang] : d.properties.desig; 
   }
@@ -633,14 +633,14 @@ function exportSVG(fname) {
   }
 
   function starPropername(id) {
-    var lang = cfg.stars.propernameType;
+    let lang = cfg.stars.propernameType;
     if (!has(starnames, id)) return "";
     return has(starnames[id], lang) ? starnames[id][lang] : starnames[id].name; 
   }
 
   function starSize(mag) {
     if (mag === null) return 0.1; 
-    var d = cfg.stars.size * adapt * Math.exp(cfg.stars.exponent * (mag + 2));
+    let d = cfg.stars.size * adapt * Math.exp(cfg.stars.exponent * (mag + 2));
     return Math.max(d, 0.1);
   }
   
@@ -654,29 +654,29 @@ function exportSVG(fname) {
   }
 
   function moonSymbol(p, r) { 
-    var size = r ? r*r : 121;
+    let size = r ? r*r : 121;
     return d3.svg.customSymbol().type("crescent").size(size).ratio(p.age)();
   }
 
   function planetSymbol(p, r) { 
-    var size = r ? r*r : planetSize(p.mag);
+    let size = r ? r*r : planetSize(p.mag);
     return d3.svg.symbol().type("circle").size(size)();
   }
 
   function planetFont(s) {
-    var size = s.replace(/(^\D*)(\d+)(\D.+$)/i,'$2');
+    let size = s.replace(/(^\D*)(\d+)(\D.+$)/i,'$2');
     size = Math.round(adapt * size);
     return s.replace(/(^\D*)(\d+)(\D.+$)/i,'$1' + size + '$3');
   }
 
   function planetSize(m) {
-    var mag = m || 2; 
-    var r = 4 * adapt * Math.exp(-0.05 * (mag+2));
+    let mag = m || 2; 
+    let r = 4 * adapt * Math.exp(-0.05 * (mag+2));
     return Math.max(r, 2);
   }
 
   function createEntry(o) {
-    var res = {type: "Feature", "id":o.id, properties: {}, geometry:{}};
+    let res = {type: "Feature", "id":o.id, properties: {}, geometry:{}};
     res.properties.name = o[cfg.planets.namesType];
     if (cfg.planets.symbolType === "symbol" || cfg.planets.symbolType === "letter")
       res.properties.symbol = cfg.planets.symbols[res.id][cfg.planets.symbolType];
@@ -691,8 +691,8 @@ function exportSVG(fname) {
   }
 
   function createStyles() {
-    var res = "";
-    for (var key in styles) {
+    let res = "";
+    for (let key in styles) {
       if (!has(styles, key)) continue;
       res += " ." + key + stringifyStyle(styles[key]);
     }
@@ -700,8 +700,8 @@ function exportSVG(fname) {
   }
 
   function stringifyStyle(s) {
-    var res = " {";
-    for (var key in s) {
+    let res = " {";
+    for (let key in s) {
       if (!has(s, key)) continue;
       res += key + ":" + s[key] + "; ";
     }
@@ -710,7 +710,7 @@ function exportSVG(fname) {
 
   q.await(function(error) {
     if (error) throw error;
-    var svg = d3.select("#d3-celestial-svg svg")
+    let svg = d3.select("#d3-celestial-svg svg")
       .attr("title", "D3-Celestial")
       .attr("version", 1.1)
       .attr("encoding", "UTF-8")
@@ -728,9 +728,9 @@ function exportSVG(fname) {
      .attr(":inkscape:window-height", m.height)
      .attr(":inkscape:window-maximized", "1");*/
     if (fname) {
-      var blob = new Blob([svg.node().outerHTML], {type:"image/svg+xml;charset=utf-8"});
+      let blob = new Blob([svg.node().outerHTML], {type:"image/svg+xml;charset=utf-8"});
     
-      var a = d3.select("body").append("a").node(); 
+      let a = d3.select("body").append("a").node(); 
       a.download = fname || "d3-celestial.svg";
       a.rel = "noopener";
       a.href = URL.createObjectURL(blob);
@@ -744,9 +744,9 @@ function exportSVG(fname) {
 
 }
 
-var customSvgSymbols = d3.map({
+let customSvgSymbols = d3.map({
   'ellipse': function(size, ratio) {
-    var s = Math.sqrt(size), 
+    let s = Math.sqrt(size), 
         rx = s*0.666, ry = s/3;
     return 'M' + (-rx) + ',' + (-ry) +
     ' m' + (-rx) + ',0' +
@@ -754,7 +754,7 @@ var customSvgSymbols = d3.map({
     ' a' + rx + ',' + ry + ' 0 1,0' + (-(rx * 2)) + ',0';
   },
   'marker': function(size, ratio) {
-    var s =  size > 48 ? size / 4 : 12,
+    let s =  size > 48 ? size / 4 : 12,
         r = s/2, l = r-3;
     return 'M ' + (-r) + ' 0 h ' + l + 
            ' M 0 ' + (-r) + ' v ' + l + 
@@ -762,7 +762,7 @@ var customSvgSymbols = d3.map({
            ' M 0 ' + r + ' v ' + (-l);
   },
   'cross-circle': function(size, ratio) {
-    var s = Math.sqrt(size), 
+    let s = Math.sqrt(size), 
         r = s/2;
     return 'M' + (-r) + ',' + (-r) +
     ' m' + (-r) + ',0' +
@@ -773,7 +773,7 @@ var customSvgSymbols = d3.map({
         
   },
   'stroke-circle': function(size, ratio) {
-    var s = Math.sqrt(size), 
+    let s = Math.sqrt(size), 
         r = s/2;
     return 'M' + (-r) + ',' + (-r) +
     ' m' + (-r) + ',0' +
@@ -783,7 +783,7 @@ var customSvgSymbols = d3.map({
 
   }, 
   "crescent": function(size, ratio) {
-    var s = Math.sqrt(size), 
+    let s = Math.sqrt(size), 
         r = s/2,
         ph = 0.5 * (1 - Math.cos(ratio)),
         e = 1.6 * Math.abs(ph - 0.5) + 0.01,
@@ -797,7 +797,7 @@ var customSvgSymbols = d3.map({
 });
 
 d3.svg.customSymbol = function() {
-  var type, size = 64, ratio = d3.functor(1);
+  let type, size = 64, ratio = d3.functor(1);
   
   function symbol(d,i) {
     return customSvgSymbols.get(type.call(this,d,i))(size.call(this,d,i), ratio.call(this,d,i));
@@ -820,7 +820,7 @@ d3.svg.customSymbol = function() {
   return symbol;
 };
 
-var exportCallback = null;
+let exportCallback = null;
 
 Celestial.exportSVG = function(callback) {
   if (!callback) return;

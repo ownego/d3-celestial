@@ -1,6 +1,6 @@
 /* global d3, topojson, Celestial, settings, container */
 function timezones() {
-  var cfg = settings.set(),
+  let cfg = settings.set(),
        world, timezone;
   d3.json(cfg.datapath + "timezones.json", function(error, json) {
     world = topojson.feature(json, json.objects.timezones);
@@ -12,7 +12,7 @@ function timezones() {
   });
 
   function getTimezone(pos) {
-    var tz;
+    let tz;
     Celestial.container.selectAll(".tz").each( function(d,i) {
       if (pointInPolygon(pos, d.geometry.coordinates[0])) {
         tz = getMinutes(d.properties.zone);
@@ -24,19 +24,19 @@ function timezones() {
 
   function getMinutes(s) {
     if (!s) return;
-    /*var tza = s.match(/UTC([\+\-])(\d+)\:(\d+)/);
+    /*let tza = s.match(/UTC([\+\-])(\d+)\:(\d+)/);
     if (tza === null) return;
-    var tzm = parseInt(tza[2]) * 60 + parseInt(tza[3]);
+    let tzm = parseInt(tza[2]) * 60 + parseInt(tza[3]);
     if (tza[1] === "-") tzm *= -1;*/
     return parseFloat(s) * 60;
   }
 
   function pointInPolygon(p, polygon) {
-    var isInside = false;
-    var minX = polygon[0][0], maxX = polygon[0][0];
-    var minY = polygon[0][1], maxY = polygon[0][1];
-    for (var n = 1; n < polygon.length; n++) {
-      var q = polygon[n];
+    let isInside = false;
+    let minX = polygon[0][0], maxX = polygon[0][0];
+    let minY = polygon[0][1], maxY = polygon[0][1];
+    for (let n = 1; n < polygon.length; n++) {
+      let q = polygon[n];
       minX = Math.min(q[0], minX);
       maxX = Math.max(q[0], maxX);
       minY = Math.min(q[1], minY);
@@ -47,7 +47,7 @@ function timezones() {
       return false;
     }
 
-    var i = 0, j = polygon.length - 1;
+    let i = 0, j = polygon.length - 1;
     for (i, j; i < polygon.length; j = i++) {
       if ( (polygon[i][1] > p[1]) != (polygon[j][1] > p[1]) &&
             p[0] < (polygon[j][0] - polygon[i][0]) * (p[1] - polygon[i][1]) / (polygon[j][1] - polygon[i][1]) + polygon[i][0] ) {

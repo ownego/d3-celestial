@@ -1,7 +1,7 @@
 /* global Celestial, projections, has */
 //Flipped projection generated on the fly
 Celestial.projection = function(projection) {
-  var p, raw, forward;
+  let p, raw, forward;
   
   if (!has(projections, projection)) { throw new Error("Projection not supported: " + projection); }
   p = projections[projection];    
@@ -13,13 +13,13 @@ Celestial.projection = function(projection) {
   }
   
   forward = function(λ, φ) {
-    var coords = raw(-λ, φ);
+    let coords = raw(-λ, φ);
     return coords;
   };
 
   forward.invert = function(x, y) {
     try {
-      var coords = raw.invert(x, y);
+      let coords = raw.invert(x, y);
       coords[0] = coords && -coords[0];
       return coords;
     } catch(e) { console.log(e); }
@@ -30,20 +30,20 @@ Celestial.projection = function(projection) {
 
 
 function projectionTween(a, b) {
-  var prj = d3.geo.projection(raw).scale(1),
+  let prj = d3.geo.projection(raw).scale(1),
       center = prj.center,
       translate = prj.translate,
       α;
 
   function raw(λ, φ) {
-    var pa = a([λ *= 180 / Math.PI, φ *= 180 / Math.PI]), pb = b([λ, φ]);
+    let pa = a([λ *= 180 / Math.PI, φ *= 180 / Math.PI]), pb = b([λ, φ]);
     return [(1 - α) * pa[0] + α * pb[0], (α - 1) * pa[1] - α * pb[1]];
   }
 
   prj.alpha = function(_) {
     if (!arguments.length) return α;
     α = +_;
-    var ca = a.center(), cb = b.center(),
+    let ca = a.center(), cb = b.center(),
         ta = a.translate(), tb = b.translate();
     
     center([(1 - α) * ca[0] + α * cb[0], (1 - α) * ca[1] + α * cb[1]]);
@@ -56,7 +56,7 @@ function projectionTween(a, b) {
   return prj.alpha(0);
 }
 
-var eulerAngles = {
+let eulerAngles = {
   "equatorial": [0.0, 0.0, 0.0],
   "ecliptic": [0.0, 0.0, 23.4393],
   "galactic": [93.5949, 28.9362, -58.5988],
@@ -64,7 +64,7 @@ var eulerAngles = {
 //  "mars": [97.5,23.5,29]
 };
 
-var poles = {
+let poles = {
   "equatorial": [0.0, 90.0],
   "ecliptic": [-90.0, 66.5607],
   "galactic": [-167.1405, 27.1283],

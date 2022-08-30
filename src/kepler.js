@@ -1,5 +1,5 @@
 ﻿/* global transform, Trig, Moon, deg2rad, dateParse, has, halfπ, τ */
-var gmdat = {
+let gmdat = {
   "sol": 0.0002959122082855911025,  // AU^3/d^2
   "mer": 164468599544771, //km^3/d^2
   "ven": 2425056445892137,
@@ -49,8 +49,8 @@ kelements = ["a","e","i","w","M","L","W","N","n","ep","ref","lecl","becl","Tilt"
     
 */
 
-var Kepler = function () {
-  var gm = gmdat.sol, 
+let Kepler = function () {
+  let gm = gmdat.sol, 
       parentBody = "sol", 
       elem = {}, dat = {},
       id, name, symbol;
@@ -69,8 +69,8 @@ var Kepler = function () {
     return kepler;
   }
 
-  var dates = function(date) {
-    var dt, de = dat.ephemeris = {};
+  let dates = function(date) {
+    let dt, de = dat.ephemeris = {};
     if (date) {
       if (date instanceof Date) { dt = new Date(date.valueOf()); }
       else { dt = dateParse(date); }
@@ -85,13 +85,13 @@ var Kepler = function () {
     de.cy = de.d / 36525;
   };
 
-  var coordinates = function() {
-    var key, de = dat.ephemeris;
+  let coordinates = function() {
+    let key, de = dat.ephemeris;
     if (id === "lun") {
       de = moon_elements(de);
       if (!de) return;
     } else {
-      for (var i=0; i<kelements.length; i++) {
+      for (let i=0; i<kelements.length; i++) {
         key = kelements[i];
         if (!has(elem, key)) continue; 
         if (has(elem, "d"+key)) {
@@ -129,11 +129,11 @@ var Kepler = function () {
   };
   
   kepler.elements = function(_) {
-    var key;
+    let key;
     
     if (!arguments.length || arguments[0] === undefined) return kepler;
     
-    for (var i=0; i<kelements.length; i++) {
+    for (let i=0; i<kelements.length; i++) {
       key = kelements[i];
       if (!has(_, key)) continue; 
       elem[key] = _[key];
@@ -153,7 +153,7 @@ var Kepler = function () {
 
   kepler.params = function(_) {
     if (!arguments.length) return kepler; 
-    for (var par in _) {
+    for (let par in _) {
       if (!has(_, par)) continue;
       if (_[par] === "elements") continue;
       dat[par] = _[par];
@@ -190,7 +190,7 @@ var Kepler = function () {
 
   
   function near_parabolic(E, e) {
-    var anom2 = e > 1.0 ? E*E : -E*E,
+    let anom2 = e > 1.0 ? E*E : -E*E,
         term = e * anom2 * E / 6.0,
         rval = (1.0 - e) * E - term,
         n = 4;
@@ -204,7 +204,7 @@ var Kepler = function () {
   }
 
   function anomaly() {
-    var de = dat.ephemeris,
+    let de = dat.ephemeris,
         curr, err, trial, tmod,
         e = de.e, M = de.M,
         thresh = 1e-8,
@@ -282,7 +282,7 @@ var Kepler = function () {
   }
 
   function trueAnomaly() {
-    var x, y, r0, g, t, de = dat.ephemeris;
+    let x, y, r0, g, t, de = dat.ephemeris;
 
     if (de.e === 1.0) {   /* parabolic */
       t = de.jd0 - de.T;
@@ -308,7 +308,7 @@ var Kepler = function () {
   }
 
   function derive() {
-    var de = dat.ephemeris;
+    let de = dat.ephemeris;
     if (!de.hasOwnProperty("w")) {
       de.w = de.W - de.N;
     }
@@ -332,29 +332,29 @@ var Kepler = function () {
   }
 
   function transpose() {
-    var de = dat.ephemeris;
+    let de = dat.ephemeris;
     if (!de.ref || de.ref === "ecl") {
       de.tx = de.x;
       de.ty = de.y;
       de.tz = de.z;
       return;
     }
-    var a0 = de.lecl,// - Math.PI/2,
+    let a0 = de.lecl,// - Math.PI/2,
         a1 = Math.PI/2 - de.becl,
         angles = [0, a1, -a0];
     transform(de, angles);
-    var tp =  Trig.cartesian([de.tl, de.tb, de.r]);
+    let tp =  Trig.cartesian([de.tl, de.tb, de.r]);
     de.tx = tp.x;
     de.ty = tp.y;
     de.tz = tp.z;
   }
 
   function equatorial(pos) {
-    var de = dat.ephemeris, pe = pos.ephemeris;
+    let de = dat.ephemeris, pe = pos.ephemeris;
     ε = (23.439292 - 0.0130042 * de.cy - 1.667e-7 * de.cy * de.cy + 5.028e-7 * de.cy * de.cy * de.cy) * deg2rad;
     sinε = Math.sin(ε);
     cosε = Math.cos(ε);
-    var o = (id === "lun") ? {x:0, y:0, z:0} : {x:pe.x, y:pe.y, z:pe.z};
+    let o = (id === "lun") ? {x:0, y:0, z:0} : {x:pe.x, y:pe.y, z:pe.z};
     de.xeq = de.x - o.x;
     de.yeq = (de.y - o.y) * cosε - (de.z - o.z) * sinε;
     de.zeq = (de.y - o.y) * sinε + (de.z - o.z) * cosε;
@@ -368,7 +368,7 @@ var Kepler = function () {
   }
 
   function magnitude() {
-    var de = dat.ephemeris,
+    let de = dat.ephemeris,
         rs = de.r, rt = de.rt,
         a = Math.acos((rs*rs + rt*rt - 1) / (2 * rs * rt)),
         q = 0.666 *((1-a/Math.PI) * Math.cos(a) + 1 / Math.PI * Math.sin(a)),
@@ -378,7 +378,7 @@ var Kepler = function () {
   }
 
   function cartesian() {
-    var de = dat.ephemeris,
+    let de = dat.ephemeris,
         u = de.v + de.w;
     de.x = de.r * (Math.cos(de.N) * Math.cos(u) - Math.sin(de.N) * Math.sin(u) * Math.cos(de.i));
     de.y = de.r * (Math.sin(de.N) * Math.cos(u) + Math.cos(de.N) * Math.sin(u) * Math.cos(de.i));
@@ -387,7 +387,7 @@ var Kepler = function () {
   }
 
   function spherical() {
-    var de = dat.ephemeris,
+    let de = dat.ephemeris,
         lon = Math.atan2(de.y, de.x),
         lat = Math.atan2(de.z, Math.sqrt(de.x*de.x + de.y*de.y));
     de.l = Trig.normalize(lon);
@@ -400,7 +400,7 @@ var Kepler = function () {
   }
 
   function polar2cart(pos) {
-    var rclat = Math.cos(pos.lat) * pos.r;
+    let rclat = Math.cos(pos.lat) * pos.r;
     pos.x = rclat * Math.cos(pos.lon);
     pos.y = rclat * Math.sin(pos.lon);
     pos.z = pos.r * Math.sin(pos.lat);
@@ -409,39 +409,39 @@ var Kepler = function () {
 
   
   function JD(dt) {  
-    var yr = dt.getUTCFullYear(),
+    let yr = dt.getUTCFullYear(),
         mo = dt.getUTCMonth() + 1,
         dy = dt.getUTCDate(),
         frac = (dt.getUTCHours() - 12 + dt.getUTCMinutes()/60.0 + dt.getUTCSeconds()/3600.0) / 24, 
         IYMIN = -4799;        /* Earliest year allowed (4800BC) */
 
     if (yr < IYMIN) return -1; 
-    var a = Math.floor((14 - mo) / 12),
+    let a = Math.floor((14 - mo) / 12),
         y = yr + 4800 - a,
         m = mo + (12 * a) - 3;
-    var jdn = dy + Math.floor((153 * m + 2)/5) + (365 * y) + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+    let jdn = dy + Math.floor((153 * m + 2)/5) + (365 * y) + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
     return jdn + frac;   
   }
 
   function mst(lon) {
-    var l = lon || 0;  // lon=0 -> gmst
+    let l = lon || 0;  // lon=0 -> gmst
     return (18.697374558 + 24.06570982441908 * dat.ephemeris.d) * 15 + l;
   }
   
     
   function observer(pos) {
-    var flat = 298.257223563,    // WGS84 flattening of earth
+    let flat = 298.257223563,    // WGS84 flattening of earth
         re = 6378.137,           // GRS80/WGS84 semi major axis of earth ellipsoid
         h = pos.h || 0,
         cart = {},
         gmst = mst();
     
-    var cosl = Math.cos(pos.lat),
+    let cosl = Math.cos(pos.lat),
         sinl = Math.sin(pos.lat),
         fl = 1.0 - 1.0 / flat;
-    var fl2 = fl * fl;
+    let fl2 = fl * fl;
     
-    var u = 1.0 / Math.sqrt (cosl * cosl + fl2 * sinl * sinl),
+    let u = 1.0 / Math.sqrt (cosl * cosl + fl2 * sinl * sinl),
         a = re * u + h,
         b = re * fl2 * u + h,
         r = Math.sqrt (a * a * cosl * cosl + b * b * sinl * sinl); // geocentric distance from earth center
@@ -455,7 +455,7 @@ var Kepler = function () {
     polar2cart(cart); 
 
     // rotate around earth's polar axis to align coordinate system from Greenwich to vernal equinox
-    var angle = gmst * deg2rad; // sideral time gmst given in hours. Convert to radians
+    let angle = gmst * deg2rad; // sideral time gmst given in hours. Convert to radians
 
     cart.x = cart.x * Math.cos(angle) - cart.y * Math.sin(angle);
     cart.y = cart.x * Math.sin(angle) + cart.y * Math.cos(angle);

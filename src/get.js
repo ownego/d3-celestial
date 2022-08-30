@@ -9,22 +9,22 @@ function getPoint(coords, trans) {
 function getData(d, trans) {
   if (trans === "equatorial") return d;
 
-  var leo = euler[trans],
+  let leo = euler[trans],
       f = d.features;
 
-  for (var i=0; i<f.length; i++)
+  for (let i=0; i<f.length; i++)
     f[i].geometry.coordinates = translate(f[i], leo);
   
   return d;
 }
 
 function getPlanets(d) {
-  var res = [];
+  let res = [];
   
-  for (var key in d) {
+  for (let key in d) {
     if (!has(d, key)) continue;
     if (cfg.planets.which.indexOf(key) === -1) continue;
-    var dat = Kepler().id(key);
+    let dat = Kepler().id(key);
     if (has(d[key], "parent")) dat.parentBody(d[key].parent);
     dat.elements(d[key].elements[0]).params(d[key]);
     if (key === "ter") 
@@ -41,7 +41,7 @@ function getPlanet(id, dt) {
   dt = dt || Celestial.date();
   if (!Celestial.origin) return;
 
-  var o = Celestial.origin(dt).spherical(), res;
+  let o = Celestial.origin(dt).spherical(), res;
      
   Celestial.container.selectAll(".planet").each(function(d) {
     if (id === d.id()) {
@@ -52,10 +52,10 @@ function getPlanet(id, dt) {
 }
 
 function getConstellationList(d) {
-  var res = {},
+  let res = {},
       f = d.features;
       
-  for (var i=0; i<f.length; i++) {
+  for (let i=0; i<f.length; i++) {
     res[f[i].id] = {
       center: f[i].properties.display.slice(0,2),
       scale: f[i].properties.display[2]
@@ -66,14 +66,14 @@ function getConstellationList(d) {
 
 function getMwbackground(d) {
   // geoJson object to darken the mw-outside, prevent greying of whole map in some orientations 
-  var res = {'type': 'FeatureCollection', 'features': [ {'type': 'Feature', 
+  let res = {'type': 'FeatureCollection', 'features': [ {'type': 'Feature', 
               'geometry': { 'type': 'MultiPolygon', 'coordinates' : [] }
             }]};
 
   // reverse the polygons, inside -> outside
-  var l1 = d.features[0].geometry.coordinates[0];
+  let l1 = d.features[0].geometry.coordinates[0];
   res.features[0].geometry.coordinates[0] = [];
-  for (var i=0; i<l1.length; i++) {
+  for (let i=0; i<l1.length; i++) {
     res.features[0].geometry.coordinates[0][i] = l1[i].slice().reverse();
   }
 
@@ -85,7 +85,7 @@ function getTimezones() {
 }
 
 function translate(d, leo) {
-  var res = [];
+  let res = [];
   switch (d.geometry.type) {
     case "Point": res = transformDeg(d.geometry.coordinates, leo); break;
     case "LineString": res.push(transLine(d.geometry.coordinates, leo)); break;
@@ -98,11 +98,11 @@ function translate(d, leo) {
 }
 
 function getGridValues(type, loc) {
-  var lines = [];
+  let lines = [];
   if (!loc) return [];
   if (!isArray(loc)) loc = [loc];
   //center, outline, values
-  for (var i=0; i < loc.length; i++) {
+  for (let i=0; i < loc.length; i++) {
     switch (loc[i]) {
       case "center": 
         if (type === "lat")
@@ -134,9 +134,9 @@ function getGridValues(type, loc) {
 }
 
 function jsonGridValues(lines) {
-  var res = [];
-  for (var i=0; i < lines.length; i++) {
-    var f = {type: "Feature", "id":i, properties: {}, geometry:{type:"Point"}};
+  let res = [];
+  for (let i=0; i < lines.length; i++) {
+    let f = {type: "Feature", "id":i, properties: {}, geometry:{type:"Point"}};
     f.properties.value = lines[i].value;
     f.properties.orientation = lines[i].orientation;
     f.geometry.coordinates = lines[i].coordinates;
@@ -146,7 +146,7 @@ function jsonGridValues(lines) {
 }
 
 function getLine(type, loc, orient) {
-  var min, max, step, val, coord,
+  let min, max, step, val, coord,
       tp = type,
       res = [],
       lr = loc;
@@ -159,8 +159,8 @@ function getLine(type, loc, orient) {
   } else {
     min = -80; max = 80; step = 10;    
   }
-  for (var i=min; i<=max; i+=step) {
-    var o = orient;
+  for (let i=min; i<=max; i+=step) {
+    let o = orient;
     if (tp === "lat") {
       coord = [lr, i];
       val = i.toString() + "\u00b0";
@@ -179,18 +179,18 @@ function getLine(type, loc, orient) {
 }
 
 function transLine(c, leo) {
-  var line = [];
+  let line = [];
   
-  for (var i=0; i<c.length; i++)
+  for (let i=0; i<c.length; i++)
     line.push(transformDeg(c[i], leo));
   
   return line;
 }
 
 function transMultiLine(c, leo) {
-  var lines = [];
+  let lines = [];
   
-  for (var i=0; i<c.length; i++)
+  for (let i=0; i<c.length; i++)
     lines.push(transLine(c[i], leo));
   
   return lines;

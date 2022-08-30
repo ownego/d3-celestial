@@ -1,9 +1,9 @@
 /* global Celestial */
-var Canvas = {}; 
+let Canvas = {}; 
 
 Canvas.symbol = function () {
   // parameters and default values
-  var type = d3.functor("circle"), 
+  let type = d3.functor("circle"), 
       size = d3.functor(64), 
       age = d3.functor(Math.PI), //crescent shape 0..2Pi
       color = d3.functor("#fff"),  
@@ -15,16 +15,16 @@ Canvas.symbol = function () {
     draw_symbol[type()](context);
   }
   
-  var draw_symbol = {
+  let draw_symbol = {
     "circle": function(ctx) {
-      var s = Math.sqrt(size()), 
+      let s = Math.sqrt(size()), 
           r = s/2;
       ctx.arc(pos[0], pos[1], r, 0, 2 * Math.PI);
       ctx.closePath();
       return r;
     },
     "square": function(ctx) {
-      var s = Math.sqrt(size()), 
+      let s = Math.sqrt(size()), 
           r = s/1.7;
       ctx.moveTo(pos[0]-r, pos[1]-r);
       ctx.lineTo(pos[0]+r, pos[1]-r);
@@ -34,7 +34,7 @@ Canvas.symbol = function () {
       return r;
     },
     "diamond": function(ctx) {
-      var s = Math.sqrt(size()), 
+      let s = Math.sqrt(size()), 
           r = s/1.5;
       ctx.moveTo(pos[0], pos[1]-r);
       ctx.lineTo(pos[0]+r, pos[1]);
@@ -44,7 +44,7 @@ Canvas.symbol = function () {
       return r;
     },
     "triangle": function(ctx) {
-      var s = Math.sqrt(size()), 
+      let s = Math.sqrt(size()), 
           r = s/Math.sqrt(3);
       ctx.moveTo(pos[0], pos[1]-r);
       ctx.lineTo(pos[0]+r, pos[1]+r);
@@ -53,7 +53,7 @@ Canvas.symbol = function () {
       return r;
     },
     "ellipse": function(ctx) {
-      var s = Math.sqrt(size()), 
+      let s = Math.sqrt(size()), 
           r = s/2;
       ctx.save();
       ctx.translate(pos[0], pos[1]);
@@ -65,7 +65,7 @@ Canvas.symbol = function () {
       return r;
     },
     "marker": function(ctx) {
-      var s = Math.sqrt(size()), 
+      let s = Math.sqrt(size()), 
           r = s/2;
       ctx.moveTo(pos[0], pos[1]-r);
       ctx.lineTo(pos[0], pos[1]+r);
@@ -75,7 +75,7 @@ Canvas.symbol = function () {
       return r;
     },
     "cross-circle": function(ctx) {
-      var s = Math.sqrt(size()), 
+      let s = Math.sqrt(size()), 
           r = s/2;
       ctx.moveTo(pos[0], pos[1]-s);
       ctx.lineTo(pos[0], pos[1]+s);
@@ -89,7 +89,7 @@ Canvas.symbol = function () {
       return r;
     },
     "stroke-circle": function(ctx) {
-      var s = Math.sqrt(size()), 
+      let s = Math.sqrt(size()), 
           r = s/2;
       ctx.moveTo(pos[0], pos[1]-s);
       ctx.lineTo(pos[0], pos[1]+s);
@@ -101,7 +101,7 @@ Canvas.symbol = function () {
       return r;
     }, 
     "crescent": function(ctx) {
-      var s = Math.sqrt(size()), 
+      let s = Math.sqrt(size()), 
           r = s/2,
           ag = age(),
           ph = 0.5 * (1 - Math.cos(ag)),
@@ -164,7 +164,7 @@ Canvas.symbol = function () {
 Celestial.Canvas = Canvas;
 
 
-/*var color = "#fff", angle = 0, align = "center", baseline = "middle", font = "10px sans-serif", padding = [0,0], aPos, sText;
+/*let color = "#fff", angle = 0, align = "center", baseline = "middle", font = "10px sans-serif", padding = [0,0], aPos, sText;
 
 canvas.text = function () {
 
@@ -173,7 +173,7 @@ canvas.text = function () {
     ctx.textAlign = align;
     ctx.textBaseline = baseline;
     
-    //var pt = projection(d.geometry.coordinates);
+    //let pt = projection(d.geometry.coordinates);
     if (angle) {
       canvas.save();     
       canvas.translate(aPos[0], aPos[1]);
@@ -229,10 +229,10 @@ canvas.text = function () {
 }
 
   function ctxPath(d) {
-    var pt;
+    let pt;
     //d.map( function(axe, i) {
     context.beginPath();
-    for (var i = 0; i < d.length; i++) {
+    for (let i = 0; i < d.length; i++) {
       pt = projection(d[i]);
       if (i === 0)
         context.moveTo(pt[0], pt[1]);
@@ -244,7 +244,7 @@ canvas.text = function () {
   
 
   function ctxText(d, ang) {
-    var pt = projection(d.geometry.coordinates);
+    let pt = projection(d.geometry.coordinates);
     if (ang) {
       canvas.save();     
       canvas.translate(pt[0], pt[1]);

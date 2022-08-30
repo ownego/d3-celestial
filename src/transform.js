@@ -1,18 +1,18 @@
 /* global Celestial, poles, eulerAngles */
-var τ = Math.PI*2,
+let τ = Math.PI*2,
     halfπ = Math.PI/2,
     deg2rad = Math.PI/180;
 
 
 //Transform equatorial into any coordinates, degrees
 function transformDeg(c, euler) {
-  var res = transform( c.map( function(d) { return d * deg2rad; } ), euler);
+  let res = transform( c.map( function(d) { return d * deg2rad; } ), euler);
   return res.map( function(d) { return d / deg2rad; } );
 }
 
 //Transform equatorial into any coordinates, radians
 function transform(c, euler) {
-  var x, y, z, β, γ, λ, φ, dψ, ψ, θ,
+  let x, y, z, β, γ, λ, φ, dψ, ψ, θ,
       ε = 1.0e-5;
 
   if (!euler) return c; 
@@ -59,13 +59,13 @@ function transform(c, euler) {
   
 function getAngles(coords) {
   if (coords === null || coords.length <= 0) return [0,0,0];
-  var rot = eulerAngles.equatorial; 
+  let rot = eulerAngles.equatorial; 
   if (!coords[2]) coords[2] = 0;
   return [rot[0] - coords[0], rot[1] - coords[1], rot[2] + coords[2]];
 }
 
 
-var euler = {
+let euler = {
   "ecliptic": [-90.0, 23.4393, 90.0],
   "inverse ecliptic": [90.0, 23.4393, -90.0],
   "galactic": [-167.1405, 62.8717, 122.9319], 
@@ -73,7 +73,7 @@ var euler = {
   "supergalactic": [283.7542, 74.2911, 26.4504],
   "inverse supergalactic": [26.4504, 74.2911, 283.7542],
   "init": function () {
-    for (var key in this) {
+    for (let key in this) {
       if (this[key].constructor == Array) { 
         this[key] = this[key].map( function(val) { return val * deg2rad; } );
       }

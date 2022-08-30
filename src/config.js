@@ -1,10 +1,10 @@
 /* global d3, Celestial, has, isArray */
 
 // Central configuration object
-var globalConfig = {};
+let globalConfig = {};
 
 //Defaults
-var settings = { 
+let settings = { 
   width: 0,     // Default width; height is determined by projection
   projection: "aitoff",  // Map projection used: airy, aitoff, armadillo, august, azimuthalEqualArea, azimuthalEquidistant, baker, berghaus, boggs, bonne, bromley, collignon, craig, craster, cylindricalEqualArea, cylindricalStereographic, eckert1, eckert2, eckert3, eckert4, eckert5, eckert6, eisenlohr, equirectangular, fahey, foucaut, ginzburg4, ginzburg5, ginzburg6, ginzburg8, ginzburg9, gringorten, hammer, hatano, healpix, hill, homolosine, kavrayskiy7, lagrange, larrivee, laskowski, loximuthal, mercator, miller, mollweide, mtFlatPolarParabolic, mtFlatPolarQuartic, mtFlatPolarSinusoidal, naturalEarth, nellHammer, orthographic, patterson, polyconic, rectangularPolyconic, robinson, sinusoidal, stereographic, times, twoPointEquidistant, vanDerGrinten, vanDerGrinten2, vanDerGrinten3, vanDerGrinten4, wagner4, wagner6, wagner7, wiechel, winkel3
   projectionRatio: null, // Optional override for default projection ratio
@@ -33,6 +33,8 @@ var settings = {
                       // Default: desig or empty string for designations, other languages as used anywhere else
   culture: "",        // Constellation lines, default "iau"
   container: "celestial-map",   // ID of parent element, e.g. div
+  formcontainer: "celestial-form",
+  datepickcontainer: "celestial-date",
   datapath: "data/",  // Path/URL to data files, empty = subfolder 'data'
   stars: {
     show: true,    // Show stars
@@ -160,7 +162,7 @@ var settings = {
     namesType: "en"  // Language in which the name is displayed, options desig, ar, cn, en, fr, de, gr, il, in, it, jp, lat, ru, es
   },
   set: function(cfg) {  // Override defaults with values of cfg
-    var prop, key, config = {}, res = {};
+    let prop, key, config = {}, res = {};
     if (Object.entries(globalConfig).length === 0) Object.assign(config, this);
     else Object.assign(config, globalConfig);
     if (!cfg) return config; 
@@ -193,7 +195,7 @@ var settings = {
     return res;
   },
   applyDefaults: function(cfg) {
-    var res = {};
+    let res = {};
     Object.assign(res, globalConfig);
     // Nothing works without these
     res.stars.size = res.stars.size || 7;  
@@ -269,7 +271,7 @@ var settings = {
 };
 
 function arrayfy(o) {
-  var res;
+  let res;
   if (!isArray(o)) return [o, o, o];  //It saves some work later, OK?
   if (o.length >= 3) return o;
   if (o.length === 1) return [o[0], o[0], o[0]];
@@ -279,7 +281,7 @@ function arrayfy(o) {
 Celestial.settings = function () { return settings; };
 
 //b-v color index to rgb color value scale
-var bvcolor = 
+let bvcolor = 
   d3.scale.quantize().domain([3.347, -0.335]) //main sequence <= 1.7
     .range([ '#ff4700', '#ff4b00', '#ff4f00', '#ff5300', '#ff5600', '#ff5900', '#ff5b00', '#ff5d00', '#ff6000', '#ff6300', '#ff6500', '#ff6700', '#ff6900', '#ff6b00', '#ff6d00', '#ff7000', '#ff7300', '#ff7500', '#ff7800', '#ff7a00', '#ff7c00', '#ff7e00', '#ff8100', '#ff8300', '#ff8506', '#ff870a', '#ff8912', '#ff8b1a', '#ff8e21', '#ff9127', '#ff932c', '#ff9631', '#ff9836', '#ff9a3c', '#ff9d3f', '#ffa148', '#ffa34b', '#ffa54f', '#ffa753', '#ffa957', '#ffab5a', '#ffad5e', '#ffb165', '#ffb269', '#ffb46b', '#ffb872', '#ffb975', '#ffbb78', '#ffbe7e', '#ffc184', '#ffc489', '#ffc78f', '#ffc892', '#ffc994', '#ffcc99', '#ffce9f', '#ffd1a3', '#ffd3a8', '#ffd5ad', '#ffd7b1', '#ffd9b6', '#ffdbba', '#ffddbe', '#ffdfc2', '#ffe1c6', '#ffe3ca', '#ffe4ce', '#ffe8d5', '#ffe9d9', '#ffebdc', '#ffece0', '#ffefe6', '#fff0e9', '#fff2ec', '#fff4f2', '#fff5f5', '#fff6f8', '#fff9fd', '#fef9ff', '#f9f6ff', '#f6f4ff', '#f3f2ff', '#eff0ff', '#ebeeff', '#e9edff', '#e6ebff', '#e3e9ff', '#e0e7ff', '#dee6ff', '#dce5ff', '#d9e3ff', '#d7e2ff', '#d3e0ff', '#c9d9ff', '#bfd3ff', '#b7ceff', '#afc9ff', '#a9c5ff', '#a4c2ff', '#9fbfff', '#9bbcff']);
  
@@ -289,7 +291,7 @@ var bvcolor =
      ratio: width/height ratio, 2.0 if none
      clip: projection clipped to 90 degrees from center, otherwise to antimeridian
 */
-var projections = {
+let projections = {
   "airy": {n:"Airy’s Minimum Error", arg:Math.PI/2, scale:360, ratio:1.0, clip:true},
   "aitoff": {n:"Aitoff", arg:null, scale:162},
   "armadillo": {n:"Armadillo", arg:0, scale:250}, 
@@ -366,7 +368,7 @@ var projections = {
 
 Celestial.projections = function () { return projections; };
 
-var formats = {
+let formats = {
   "starnames": {
     // "name":"","bayer":"","flam":"","var":"","gl":"","hd":"","c":"","desig":""
     "iau": {
@@ -508,7 +510,7 @@ var formats = {
   }
 };
 
-var formats_all = {
+let formats_all = {
   "iau": Object.keys(formats.constellations.iau.names).concat(Object.keys(formats.planets.iau.names)).filter( function(value, index, self) { return self.indexOf(value) === index; } ),
   "cn":  Object.keys(formats.constellations.cn.names).concat(Object.keys(formats.starnames.cn.propername)).filter( function(value, index, self) { return self.indexOf(value) === index; } )
 };

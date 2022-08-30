@@ -1,9 +1,9 @@
 /* global Celestial, has */
 //Add more JSON data to the map
-var hasCallback = false;
+let hasCallback = false;
 
 Celestial.add = function(dat) {
-  var res = {};
+  let res = {};
   //dat: {file: path, type:'json|raw', callback: func(), redraw: func()} 
   //or {file:file, size:null, shape:null, color:null}  TBI
   //  with size,shape,color: "prop=val:result;.." || function(prop) { .. return res; } 
