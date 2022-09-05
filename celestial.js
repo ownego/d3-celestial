@@ -2474,7 +2474,7 @@ function form(cfg) {
   //if div doesn't exist, create it
   if (div.size() < 1) {
     //let container = (config.container || "celestial-map");
-    div = d3.select(parentElement).select(function () { return this.parentNode; }).append("div").attr("id", `${config?.formcontainer ?? "celestial-form"}`);
+    div = d3.select(parentElement).select(function () { return this.parentNode; }).append("div").attr("id", `${config?.formcontainer ?? "celestial-form"}`).attr("class", "celestial-form");
   }
   let ctrl = div.append("div").attr("class", "ctrl");
   let frm = ctrl.append("form").attr("id", "params").attr("name", "params").attr("method", "get").attr("action", "#");
