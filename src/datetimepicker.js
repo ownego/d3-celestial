@@ -8,8 +8,8 @@ let datetimepicker = function (cfg, callback) {
     dtrange = cfg.daterange || [],
     years = getYears(date),
     dateFormat = d3.time.format("%Y-%m-%d"),
-    formContainer = `${parentElement} ~ #${cfg?.formcontainer ?? "celestial-form"}`,
-    dateContainer = `${cfg?.datepickcontainer ?? "celestial-date"}`;
+    formContainer = `${parentElement} ~ #${cfg.formcontainer}`,
+    dateContainer = `${cfg.datepickcontainer}`;
 
   let picker = d3.select(formContainer).append("div").attr("id", dateContainer).attr("class", "celestial-date");
   nav("left");

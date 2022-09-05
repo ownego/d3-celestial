@@ -2469,12 +2469,12 @@ function form(cfg) {
   let config = settings.set(cfg);
 
   let prj = Celestial.projections(), leo = Celestial.eulerAngles();
-  let formContainer = `${parentElement} ~ #${config?.formcontainer ?? "celestial-form"}`;
+  let formContainer = `${parentElement} ~ #${config.formcontainer}`;
   let div = d3.select(formContainer);
   //if div doesn't exist, create it
   if (div.size() < 1) {
     //let container = (config.container || "celestial-map");
-    div = d3.select(parentElement).select(function () { return this.parentNode; }).append("div").attr("id", `${config?.formcontainer ?? "celestial-form"}`).attr("class", "celestial-form");
+    div = d3.select(parentElement).select(function () { return this.parentNode; }).append("div").attr("id", config.formcontainer).attr("class", "celestial-form");
   }
   let ctrl = div.append("div").attr("class", "ctrl");
   let frm = ctrl.append("form").attr("id", "params").attr("name", "params").attr("method", "get").attr("action", "#");
@@ -3183,7 +3183,7 @@ function setLimits() {
 //"stars-designationType", "stars-propernameType", "stars-size", "stars-exponent", "stars-size", "stars-exponent", //"constellations-namesType", "planets-namesType", "planets-symbolType"
 function showAdvanced(showit) {
   let vis = showit ? "inline-block" : "none";
-  let formContainer = `${parentElement} ~ #${cfg?.formcontainer ?? config?.formcontainer ?? "celestial-form"}`;
+  let formContainer = `${parentElement} ~ #${cfg.formcontainer}`;
   d3.select(formContainer).selectAll(".advanced").style("display", vis);
   d3.select(formContainer).selectAll("#label-propername").style("display", showit ? "none" : "inline-block");
 }
@@ -3191,7 +3191,7 @@ function showAdvanced(showit) {
 
 function setVisibility(cfg, which) {
   let vis, fld;
-  let formContainer = `${parentElement} ~ #${cfg?.formcontainer ?? "celestial-form"}`;
+  let formContainer = `${parentElement} ~ #${cfg.formcontainer}`;
   if (!has(cfg, "formFields")) return;
   if (which && has(cfg.formFields, which)) {
     d3.select(formContainer).select("#" + which).style({ "display": "none" });
@@ -3221,7 +3221,7 @@ function setVisibility(cfg, which) {
 
 function listConstellations() {
   let list = [], selected = 0, id, name, config = globalConfig,
-    sel = d3.select(`${parentElement} ~ #${cfg?.formcontainer ?? config?.formcontainer ?? "celestial-form"}`).select("#constellation");
+    sel = d3.select(`${parentElement} ~ #${config.formcontainer}`).select("#constellation");
 
   Celestial.container.selectAll(".constname").each(function (d, i) {
     id = d.id;
@@ -3246,7 +3246,7 @@ function listConstellations() {
   //Celestial.constellations = list;
 }
 
-function $form(id) { return document.querySelector(`${parentElement} ~ #${cfg?.formcontainer ?? config?.formcontainer ?? "celestial-form"}` + " #" + id); }
+function $form(id) { return document.querySelector(`${parentElement} ~ #${cfg.formcontainer}` + " #" + id); }
 
 
 let geoInfo = null;
@@ -3259,7 +3259,7 @@ function geo(cfg) {
     localZone = -date.getTimezoneOffset(),
     timeZone = localZone,
     config = settings.set(cfg),
-    formContainer = `${parentElement} ~ #${config.formcontainer ?? "celestial-form"}`,
+    formContainer = `${parentElement} ~ #${config.formcontainer}`,
     frm = d3.select(`${formContainer} form`).insert("div", "div#general").attr("id", "loc");
 
   let dtpick = new datetimepicker(config, function (date, tz) {
@@ -3351,7 +3351,7 @@ function geo(cfg) {
 
 
   document.addEventListener("mousedown", function (event) {
-    if (!hasParent(event.target, `${config?.datetimepicker ?? "celestial-date"}`) && dtpick.isVisible()) dtpick.hide();
+    if (!hasParent(event.target, config.datetimepicker) && dtpick.isVisible()) dtpick.hide();
   });
 
   function now() {
@@ -5421,8 +5421,8 @@ let datetimepicker = function (cfg, callback) {
     dtrange = cfg.daterange || [],
     years = getYears(date),
     dateFormat = d3.time.format("%Y-%m-%d"),
-    formContainer = `${parentElement} ~ #${cfg?.formcontainer ?? "celestial-form"}`,
-    dateContainer = `${cfg?.datepickcontainer ?? "celestial-date"}`;
+    formContainer = `${parentElement} ~ #${cfg.formcontainer}`,
+    dateContainer = `${cfg.datepickcontainer}`;
 
   let picker = d3.select(formContainer).append("div").attr("id", dateContainer).attr("class", "celestial-date");
   nav("left");

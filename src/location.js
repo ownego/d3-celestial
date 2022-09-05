@@ -10,7 +10,7 @@ function geo(cfg) {
     localZone = -date.getTimezoneOffset(),
     timeZone = localZone,
     config = settings.set(cfg),
-    formContainer = `${parentElement} ~ #${config.formcontainer ?? "celestial-form"}`,
+    formContainer = `${parentElement} ~ #${config.formcontainer}`,
     frm = d3.select(`${formContainer} form`).insert("div", "div#general").attr("id", "loc");
 
   let dtpick = new datetimepicker(config, function (date, tz) {
@@ -102,7 +102,7 @@ function geo(cfg) {
 
 
   document.addEventListener("mousedown", function (event) {
-    if (!hasParent(event.target, `${config?.datetimepicker ?? "celestial-date"}`) && dtpick.isVisible()) dtpick.hide();
+    if (!hasParent(event.target, config.datetimepicker) && dtpick.isVisible()) dtpick.hide();
   });
 
   function now() {
