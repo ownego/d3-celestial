@@ -3,10 +3,14 @@
     function createCelestialFromConfig(cfg) {
       function createCelestial() {
     
+let scopedContainer = null;
+
 let Celestial = {
   version: '0.7.35',
-  container: null,
-  data: []
+  data: [],
+  get container() {
+    return scopedContainer;
+  }
 };
 
 let ANIMDISTANCE = 0.035,  // Rotation animation threshold, ~2deg in radians
@@ -22,7 +26,7 @@ let cfg, mapProjection, parentElement, zoom, map, circle, daylight, starnames = 
 // Show it all, with the given config, otherwise with default settings
 Celestial.display = function(config) {
   let animationID,
-      container = Celestial.container,
+      container = scopedContainer,
       animations = [], 
       current = 0, 
       repeat = false;
@@ -929,7 +933,7 @@ Celestial.display = function(config) {
 
   
   // Exported objects and functions for adding data
-  this.container = container;
+  scopedContainer = container;
   this.clip = clip;
   this.map = map;
   this.mapProjection = mapProjection;
