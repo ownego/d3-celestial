@@ -1,8 +1,12 @@
 /* global module, require, topojson, settings, bvcolor, projections, projectionTween, poles, eulerAngles, euler, getAngles, transformDeg, getData, getPlanets, getPlanet, listConstellations, getConstellationList, getMwbackground, getGridValues, Canvas, halfπ, $, px, Round, has, hasCallback, isArray, isNumber, arrayfy, form, geo, fldEnable, setCenter, interpolateAngle, formats */
+let scopedContainer = null;
+
 let Celestial = {
   version: '0.7.35',
-  container: null,
-  data: []
+  data: [],
+  get container() {
+    return scopedContainer;
+  }
 };
 
 let ANIMDISTANCE = 0.035,  // Rotation animation threshold, ~2deg in radians
@@ -18,7 +22,7 @@ let cfg, mapProjection, parentElement, zoom, map, circle, daylight, starnames = 
 // Show it all, with the given config, otherwise with default settings
 Celestial.display = function(config) {
   let animationID,
-      container = Celestial.container,
+      container = scopedContainer,
       animations = [], 
       current = 0, 
       repeat = false;
@@ -925,7 +929,7 @@ Celestial.display = function(config) {
 
   
   // Exported objects and functions for adding data
-  this.container = container;
+  scopedContainer = container;
   this.clip = clip;
   this.map = map;
   this.mapProjection = mapProjection;
