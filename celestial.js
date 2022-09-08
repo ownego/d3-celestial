@@ -3434,6 +3434,8 @@ function geo(cfg) {
       }
       $form("datetime").value = dateFormat(date, timeZone);
       go();
+    }).catch(error => {
+      console.log(error);
     });
   }
 
