@@ -159,16 +159,16 @@ Celestial.display = function (config) {
     // Load data
     let [milkyWayData, constellationsData, constellationsLinesData, starsData, starnamesData, planetsData]
       = await Promise.allSettled([
-        loadJson("mw.json"),
-        loadJson(filename("constellations")),
-        loadJson(filename("constellations", "lines")),
-        loadJson(cfg.stars.data),
-        loadJson(filename("starnames")),
-        loadJson(filename("planets"))
+        loadJson(path + "mw.json"),
+        loadJson(path + filename("constellations")),
+        loadJson(path + filename("constellations", "lines")),
+        loadJson(path + cfg.stars.data),
+        loadJson(path + filename("starnames")),
+        loadJson(path + filename("planets"))
       ]);
 
-    appendMapElement(milkyWayData, (milkyWayData) => {
-      let mw = getData(milkyWayData.value, cfg.transform);
+    afterLoadJsonFromAllSettled(milkyWayData, (milkyWayData) => {
+      let mw = getData(milkyWayData, cfg.transform);
       let mw_back = getMwbackground(mw);
       container.selectAll(parentElement + " .mway")
         .data(mw.features)
@@ -180,8 +180,8 @@ Celestial.display = function (config) {
         .attr("class", "mwbg");
     });
 
-    appendMapElement(constellationsData, (constellationsData) => {
-      let con = getData(constellationsData.value, cfg.transform);
+    afterLoadJsonFromAllSettled(constellationsData, (constellationsData) => {
+      let con = getData(constellationsData, cfg.transform);
       container.selectAll(parentElement + " .constnames")
         .data(con.features)
         .enter().append("text")
@@ -190,8 +190,8 @@ Celestial.display = function (config) {
       Celestial.constellations = getConstellationList(con);
     });
 
-    appendMapElement(constellationsLinesData, (constellationsLinesData) => {
-      let conl = getData(constellationsLinesData.value, cfg.transform);
+    afterLoadJsonFromAllSettled(constellationsLinesData, (constellationsLinesData) => {
+      let conl = getData(constellationsLinesData, cfg.transform);
       container.selectAll(parentElement + " .lines")
         .data(conl.features)
         .enter().append("path")
@@ -200,8 +200,8 @@ Celestial.display = function (config) {
       listConstellations();
     });
 
-    appendMapElement(starsData, (starsData) => {
-      let st = getData(starsData.value, cfg.transform);
+    afterLoadJsonFromAllSettled(starsData, (starsData) => {
+      let st = getData(starsData, cfg.transform);
 
       container.selectAll(parentElement + " .stars")
         .data(st.features)
@@ -209,12 +209,12 @@ Celestial.display = function (config) {
         .attr("class", "star");
     });
 
-    appendMapElement(starnamesData, (starnamesData) => {
-      Object.assign(starnames, starnamesData.value);
+    afterLoadJsonFromAllSettled(starnamesData, (starnamesData) => {
+      Object.assign(starnames, starnamesData);
     });
 
-    appendMapElement(planetsData, (planetsData) => {
-      let pl = getPlanets(planetsData.value, cfg.transform);
+    afterLoadJsonFromAllSettled(planetsData, (planetsData) => {
+      let pl = getPlanets(planetsData, cfg.transform);
 
       container.selectAll(parentElement + " .planets")
         .data(pl)
@@ -231,19 +231,6 @@ Celestial.display = function (config) {
 
     if (cfg.lang && cfg.lang != "") apply(Celestial.setLanguage(cfg.lang));
     redraw();
-  }
-
-  async function loadJson(file) {
-    return new Promise((resolve, reject) => {
-      d3.json(path + file, (error, json) => {
-        if (error) reject(error);
-        else resolve(json);
-      });
-    });
-  }
-
-  function appendMapElement(data, callback) {
-    return data.status === "rejected" ? console.log(data.error) : callback(data);
   }
 
   // Zoom by factor; >1 larger <1 smaller 
@@ -967,6 +954,19 @@ Celestial.display = function (config) {
   */
   load();
 };
+
+async function loadJson(url) {
+  return new Promise((resolve, reject) => {
+    d3.json(url, (error, json) => {
+      if (error) reject(error);
+      else resolve(json);
+    });
+  });
+}
+
+function afterLoadJsonFromAllSettled(data, callback) {
+  return data.status === "rejected" ? console.log(data.error) : callback(data.value);
+}
 
 //Export entire object if invoked by require
 if (typeof module === "object" && module.exports) {
@@ -3239,8 +3239,8 @@ function geo(cfg) {
   col.append("label").attr("title", "Location coordinates long/lat").attr("for", "lat").html("Location");
   col.append("input").attr("type", "number").attr("id", "lat").attr("title", "Latitude").attr("placeholder", "Latitude").attr("max", "90").attr("min", "-90").attr("step", "0.0001").attr("value", geopos[0]).on("change", function () {
     if (testNumber(this) === true) go();
-  }); 
-  col.append("span").html("\u00b0"); 
+  });
+  col.append("span").html("\u00b0");
   col.append("input").attr("type", "number").attr("id", "lon").attr("title", "Longitude").attr("placeholder", "Longitude").attr("max", "180").attr("min", "-180").attr("step", "0.0001").attr("value", geopos[1]).on("change", function () {
     if (testNumber(this) === true) go();
   });
@@ -3419,9 +3419,8 @@ function geo(cfg) {
         "&lat=" + p[0] + "&lng=" + p[1] + "&time=" + timestamp;
     // oldZone = timeZone;
 
-    d3.json(url, function (error, json) {
-      if (error) return console.warn(error);
-      if (json.status === "FAILED") {
+    loadJson(url).then(data => {
+      if (data.status === "FAILED") {
         // Location at sea inferred from longitude
         timeZone = Math.round(p[1] / 15) * 60;
         geoInfo = {
@@ -3430,13 +3429,9 @@ function geo(cfg) {
           timestamp: timestamp
         };
       } else {
-        timeZone = json.gmtOffset / 60;
-        geoInfo = json;
+        timeZone = data.gmtOffset / 60;
+        geoInfo = data;
       }
-      //if (settime) {
-      //date.setTime(timestamp * 1000); // - (timeZone - oldZone) * 60000);
-      //console.log(date.toUTCString());
-      //}
       $form("datetime").value = dateFormat(date, timeZone);
       go();
     });

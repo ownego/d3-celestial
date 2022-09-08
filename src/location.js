@@ -1,4 +1,4 @@
-/* global Celestial, settings, horizontal, datetimepicker, config, formats, $, $form, pad, testNumber, isArray, isNumber, isValidDate, showAdvanced, enable, Round, has, hasParent, parentElement */
+/* global Celestial, loadJson, settings, horizontal, datetimepicker, config, formats, $, $form, pad, testNumber, isArray, isNumber, isValidDate, showAdvanced, enable, Round, has, hasParent, parentElement */
 
 let geoInfo = null;
 
@@ -25,8 +25,8 @@ function geo(cfg) {
   col.append("label").attr("title", "Location coordinates long/lat").attr("for", "lat").html("Location");
   col.append("input").attr("type", "number").attr("id", "lat").attr("title", "Latitude").attr("placeholder", "Latitude").attr("max", "90").attr("min", "-90").attr("step", "0.0001").attr("value", geopos[0]).on("change", function () {
     if (testNumber(this) === true) go();
-  }); 
-  col.append("span").html("\u00b0"); 
+  });
+  col.append("span").html("\u00b0");
   col.append("input").attr("type", "number").attr("id", "lon").attr("title", "Longitude").attr("placeholder", "Longitude").attr("max", "180").attr("min", "-180").attr("step", "0.0001").attr("value", geopos[1]).on("change", function () {
     if (testNumber(this) === true) go();
   });
@@ -205,9 +205,8 @@ function geo(cfg) {
         "&lat=" + p[0] + "&lng=" + p[1] + "&time=" + timestamp;
     // oldZone = timeZone;
 
-    d3.json(url, function (error, json) {
-      if (error) return console.warn(error);
-      if (json.status === "FAILED") {
+    loadJson(url).then(data => {
+      if (data.status === "FAILED") {
         // Location at sea inferred from longitude
         timeZone = Math.round(p[1] / 15) * 60;
         geoInfo = {
@@ -216,13 +215,9 @@ function geo(cfg) {
           timestamp: timestamp
         };
       } else {
-        timeZone = json.gmtOffset / 60;
-        geoInfo = json;
+        timeZone = data.gmtOffset / 60;
+        geoInfo = data;
       }
-      //if (settime) {
-      //date.setTime(timestamp * 1000); // - (timeZone - oldZone) * 60000);
-      //console.log(date.toUTCString());
-      //}
       $form("datetime").value = dateFormat(date, timeZone);
       go();
     });
