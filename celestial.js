@@ -156,6 +156,7 @@ Celestial.display = function (config) {
       }
     }
 
+    // Load data
     let [milkyWayData, constellationsData, constellationsLinesData, starsData, starnamesData, planetsData]
       = await Promise.allSettled([
         loadJson("mw.json"),
@@ -166,10 +167,7 @@ Celestial.display = function (config) {
         loadJson(filename("planets"))
       ]);
 
-    if (milkyWayData.status == "rejected") {
-      console.log("Milky way dead");
-      return;
-    } else {
+    appendMapElement(milkyWayData, (milkyWayData) => {
       let mw = getData(milkyWayData.value, cfg.transform);
       let mw_back = getMwbackground(mw);
       container.selectAll(parentElement + " .mway")
@@ -180,12 +178,9 @@ Celestial.display = function (config) {
         .data(mw_back.features)
         .enter().append("path")
         .attr("class", "mwbg");
-    }
+    });
 
-    if (constellationsData.status == "rejected") {
-      console.log("Constellations dead");
-      return;
-    } else {
+    appendMapElement(constellationsData, (constellationsData) => {
       let con = getData(constellationsData.value, cfg.transform);
       container.selectAll(parentElement + " .constnames")
         .data(con.features)
@@ -193,12 +188,9 @@ Celestial.display = function (config) {
         .attr("class", "constname");
 
       Celestial.constellations = getConstellationList(con);
-    }
+    });
 
-    if (constellationsLinesData.status === "rejected") {
-      console.log("Constellation lines dead");
-      return;
-    } else {
+    appendMapElement(constellationsLinesData, (constellationsLinesData) => {
       let conl = getData(constellationsLinesData.value, cfg.transform);
       container.selectAll(parentElement + " .lines")
         .data(conl.features)
@@ -206,38 +198,29 @@ Celestial.display = function (config) {
         .attr("class", "constline");
 
       listConstellations();
-    }
+    });
 
-    if (starsData.status === "rejected") {
-      console.log("Stars dead");
-      return;
-    } else {
+    appendMapElement(starsData, (starsData) => {
       let st = getData(starsData.value, cfg.transform);
 
       container.selectAll(parentElement + " .stars")
         .data(st.features)
         .enter().append("path")
         .attr("class", "star");
-    }
+    });
 
-    if (starnamesData.status === "rejected") {
-      console.log("Starnames dead");
-      return;
-    } else {
+    appendMapElement(starnamesData, (starnamesData) => {
       Object.assign(starnames, starnamesData.value);
-    }
+    });
 
-    if (planetsData.status === "rejected") {
-      console.log("Planets dead");
-      return;
-    } else {
+    appendMapElement(planetsData, (planetsData) => {
       let pl = getPlanets(planetsData.value, cfg.transform);
 
       container.selectAll(parentElement + " .planets")
         .data(pl)
         .enter().append("path")
         .attr("class", "planet");
-    }
+    });
 
     if (Celestial.data.length > 0) {
       Celestial.data.forEach(function (d) {
@@ -257,6 +240,10 @@ Celestial.display = function (config) {
         else resolve(json);
       });
     });
+  }
+
+  function appendMapElement(data, callback) {
+    return data.status === "rejected" ? console.log(data.error) : callback(data);
   }
 
   // Zoom by factor; >1 larger <1 smaller 

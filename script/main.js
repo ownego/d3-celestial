@@ -144,6 +144,10 @@ let config = {
 };
 
 firstCelestial = createCelestialFromConfig(config);
+firstCelestial.addCallback(function() {
+    console.log("This is callback");
+});
+
 let newConfig = {
     disableAnimations: true,
     width: 1000,
