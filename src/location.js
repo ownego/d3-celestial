@@ -292,6 +292,12 @@ function geo(cfg) {
     return [l, b - 0.001];
   };
 
+  Object.defineProperty(Celestial, 'tz', {
+    get: function() {
+      return timeZone;
+    }
+  });
+
   if (has(config, "formFields") && (config.location === true || config.formFields.location === true)) {
     d3.select(formContainer).select("#location").style({ "display": "inline-block" });
   }
