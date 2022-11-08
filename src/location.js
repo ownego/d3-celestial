@@ -1,28 +1,12 @@
 /* global Celestial, loadJson, settings, horizontal, datetimepicker, config, formats, $, $form, pad, testNumber, isArray, isNumber, isValidDate, showAdvanced, enable, Round, has, hasParent, parentElement */
 
-let geoInfo = null;
-
 function geo(cfg) {
-  let dtFormat = d3.time.format("%Y-%m-%d %H:%M:%S"),
-    zenith = [0, 0],
+  let zenith = [0, 0],
     geopos = [0, 0],
     date = new Date(),
     localZone = -date.getTimezoneOffset(),
     timeZone = localZone,
     config = settings.set(cfg);
-
-  function dateFormat(dt, tz) {
-    let tzs;
-    if (!tz || tz === "0") tzs = " ±0000";
-    else {
-      let h = Math.floor(Math.abs(tz) / 60),
-        m = Math.abs(tz) - (h * 60),
-        s = tz > 0 ? " +" : " −";
-      tzs = s + pad(h) + pad(m);
-    }
-    return dtFormat(dt) + tzs;
-  }
-
 
   function isValidLocation(loc) {
     //[lat, lon] expected
@@ -54,30 +38,17 @@ function geo(cfg) {
 
 
   function setPosition(position) {
-    if (!position || !has(config, "settimezone") || config.settimezone === false) return;
     let timestamp = Math.floor(date.getTime() / 1000),
       protocol = window && window.location.protocol === "https:" ? "https" : "http",
       url = `${protocol}://api.timezonedb.com/v2.1/get-time-zone?key=${config.timezoneid}&format=json&by=position&lat=${position[0]}&lng=${position[1]}&time=${timestamp}`;
 
     loadJson(url).then(data => {
-      if (data.status === "FAILED") {
-        timeZone = Math.round(position[1] / 15) * 60;
-        geoInfo = {
-          gmtOffset: timeZone * 60,
-          message: "Sea locatation inferred",
-          timestamp: timestamp
-        };
-      } else {
-        timeZone = data.gmtOffset / 60;
-        geoInfo = data;
-      }
+      timeZone = data.status === "FAILED" ? Math.round(position[1] / 15) * 60 : data.gmtOffset / 60;
       go();
     }).catch(error => {
       console.log(error);
     });
   }
-
-  Celestial.dateFormat = dateFormat;
 
   Celestial.date = function (newDate, tz) {
     if (isValidTimezone(tz)) timeZone = tz;

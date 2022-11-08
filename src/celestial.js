@@ -109,7 +109,7 @@ Celestial.display = function (config) {
   circle = d3.geo.circle().angle([90]);
   daylight = d3.geo.circle().angle([179.9]);
 
-  form(cfg);
+  // form(cfg);
 
   if ($("error") === null) d3.select("body").append("div").attr("id", "error");
 
