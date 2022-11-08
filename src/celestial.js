@@ -118,8 +118,6 @@ Celestial.display = function (config) {
 
   if (cfg.location === true || cfg.formFields.location === true) {
     d3.select(parentElement + " #location").style("display", "inline-block");
-    fldEnable("horizon-show", projectionSetting.clip);
-    fldEnable("daylight-show", !projectionSetting.clip);
   }
 
   async function load() {
@@ -193,7 +191,6 @@ Celestial.display = function (config) {
         .enter().append("path")
         .attr("class", "constline");
 
-      listConstellations();
     });
 
     afterLoadJsonFromAllSettled(starsData, (starsData) => {

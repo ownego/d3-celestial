@@ -122,8 +122,6 @@ Celestial.display = function (config) {
 
   if (cfg.location === true || cfg.formFields.location === true) {
     d3.select(parentElement + " #location").style("display", "inline-block");
-    fldEnable("horizon-show", projectionSetting.clip);
-    fldEnable("daylight-show", !projectionSetting.clip);
   }
 
   async function load() {
@@ -197,7 +195,6 @@ Celestial.display = function (config) {
         .enter().append("path")
         .attr("class", "constline");
 
-      listConstellations();
     });
 
     afterLoadJsonFromAllSettled(starsData, (starsData) => {
@@ -2432,8 +2429,6 @@ function poligonContains(polygon, point) {
 //display settings form in div with id "celestial-form"
 function form(cfg) {
   let config = settings.set(cfg);
-
-  let prj = Celestial.projections(), leo = Celestial.eulerAngles();
   let formContainer = `${parentElement} ~ #${config.formcontainer}`;
   let div = d3.select(formContainer);
   //if div doesn't exist, create it
@@ -2441,525 +2436,6 @@ function form(cfg) {
     //let container = (config.container || "celestial-map");
     div = d3.select(parentElement).select(function () { return this.parentNode; }).append("div").attr("id", config.formcontainer).attr("class", "celestial-form");
   }
-  let ctrl = div.append("div").attr("class", "ctrl");
-  let frm = ctrl.append("form").attr("id", "params").attr("name", "params").attr("method", "get").attr("action", "#");
-
-  //Map parameters    
-  let col = frm.append("div").attr("class", "col").attr("id", "general");
-
-  col.append("label").attr("title", "Map width in pixel, 0 indicates full width").attr("for", "width").html("Width ");
-  col.append("input").attr("type", "number").attr("maxlength", "4").attr("max", "20000").attr("min", "0").attr("title", "Map width").attr("id", "width").attr("value", config.width).on("change", resize);
-  col.append("span").html("px");
-
-  col.append("label").attr("title", "Map projection, (hemi) indicates hemispherical projection").attr("for", "projection").html("Projection");
-  let sel = col.append("select").attr("id", "projection").on("change", reproject);
-  let selected = 0;
-  let list = Object.keys(prj).map(function (key, i) {
-    let n = prj[key].clip && prj[key].clip === true ? prj[key].n + " (hemi)" : prj[key].n;
-    if (key === config.projection) selected = i;
-    return { o: key, n: n };
-  });
-  sel.selectAll('option').data(list).enter().append('option')
-    .attr("value", function (d) { return d.o; })
-    .text(function (d) { return d.n; });
-  sel.property("selectedIndex", selected);
-
-  selected = 0;
-  col.append("label").attr("title", "Coordinate space in which the map is displayed").attr("for", "transform").html("Coordinates");
-  sel = col.append("select").attr("id", "transform").on("change", reload);
-  list = Object.keys(leo).map(function (key, i) {
-    if (key === config.transform) selected = i;
-    return { o: key, n: key.replace(/^([a-z])/, function (s, m) { return m.toUpperCase(); }) };
-  });
-  sel.selectAll("option").data(list).enter().append('option')
-    .attr("value", function (d) { return d.o; })
-    .text(function (d) { return d.n; });
-  sel.property("selectedIndex", selected);
-
-  col.append("br");
-  col.append("label").attr("title", "Center coordinates long/lat in selected coordinate space").attr("for", "centerx").html("Center");
-  col.append("input").attr("type", "number").attr("id", "centerx").attr("title", "Center right ascension/longitude").attr("max", "24").attr("min", "0").attr("step", "0.1").on("change", turn);
-  col.append("span").attr("id", "cxunit").html("h");
-  //addList("centerx", "ra");
-
-  col.append("input").attr("type", "number").attr("id", "centery").attr("title", "Center declination/latitude").attr("max", "90").attr("min", "-90").attr("step", "0.1").on("change", turn);
-  col.append("span").html("\u00b0");
-
-  col.append("label").attr("title", "Orientation").attr("for", "centerz").html("Orientation");
-  col.append("input").attr("type", "number").attr("id", "centerz").attr("title", "Center orientation").attr("max", "180").attr("min", "-180").attr("step", "0.1").on("change", turn);
-  col.append("span").html("\u00b0");
-
-  col.append("label").attr("for", "orientationfixed").attr("class", "advanced").html("Fixed");
-  col.append("input").attr("type", "checkbox").attr("id", "orientationfixed").attr("class", "advanced").property("checked", config.orientationfixed).on("change", apply);
-
-  col.append("label").attr("title", "Center and zoom in on this constellation").attr("for", "constellation").html("Show");
-  col.append("select").attr("id", "constellation").on("change", showConstellation);
-
-  setCenter(config.center, config.transform);
-
-  // Stars 
-  col = frm.append("div").attr("class", "col").attr("id", "stars");
-
-  col.append("label").attr("class", "header").attr("for", "stars-show").html("Stars");
-  col.append("input").attr("type", "checkbox").attr("id", "stars-show").property("checked", config.stars.show).on("change", apply);
-
-  col.append("label").attr("for", "stars-limit").html("down to magnitude");
-  col.append("input").attr("type", "number").attr("id", "stars-limit").attr("title", "Star display limit (magnitude)").attr("value", config.stars.limit).attr("max", "6").attr("min", "-1").attr("step", "0.1").on("change", apply);
-
-  col.append("label").attr("for", "stars-colors").html("with spectral colors");
-  col.append("input").attr("type", "checkbox").attr("id", "stars-colors").property("checked", config.stars.colors).on("change", apply);
-
-  col.append("label").attr("for", "stars-color").html("or default color ");
-  col.append("input").attr("type", "color").attr("autocomplete", "off").attr("id", "stars-style-fill").attr("title", "Star color").property("value", config.stars.style.fill).on("change", apply);
-
-  col.append("br");
-
-  let names = formats.starnames[config.culture] || formats.starnames.iau;
-
-  for (let fld in names) {
-    if (!has(names, fld)) continue;
-    let keys = Object.keys(names[fld]);
-    if (keys.length > 1) {
-      //Select List
-      col.append("label").attr("for", "stars-" + fld).html("Show");
-
-      selected = 0;
-      col.append("label").attr("title", "Type of star name").attr("id", "label-propername").attr("for", "stars-" + fld + "Type").html(function () { return fld === "propername" ? "proper names" : ""; });
-      sel = col.append("select").attr("id", "stars-" + fld + "Type").attr("class", function () { return fld === "propername" ? "advanced" : ""; }).on("change", apply);
-      list = keys.map(function (key, i) {
-        if (key === config.stars[fld + "Type"]) selected = i;
-        return { o: key, n: names[fld][key] };
-      });
-      sel.selectAll("option").data(list).enter().append('option')
-        .attr("value", function (d) { return d.o; })
-        .text(function (d) { return d.n; });
-      sel.property("selectedIndex", selected);
-
-      col.append("input").attr("type", "checkbox").attr("id", "stars-" + fld).property("checked", config.stars[fld]).on("change", apply);
-    } else if (keys.length === 1) {
-      //Simple field
-      col.append("label").attr("for", "stars-" + fld).html(" " + names[fld][keys[0]]);
-      col.append("input").attr("type", "checkbox").attr("id", "stars-" + fld).property("checked", config.stars[fld]).on("change", apply);
-    }
-    col.append("label").attr("for", "stars-" + fld + "Limit").html("down to mag");
-    col.append("input").attr("type", "number").attr("id", "stars-" + fld + "Limit").attr("title", "Star name display limit (magnitude)").attr("value", config.stars[fld + "Limit"]).attr("max", "6").attr("min", "-1").attr("step", "0.1").on("change", apply);
-
-  }
-
-  col.append("br");
-
-  col.append("label").attr("for", "stars-size").attr("class", "advanced").html("Stellar disk size: base");
-  col.append("input").attr("type", "number").attr("id", "stars-size").attr("class", "advanced").attr("title", "Size of the displayed star disk; base").attr("value", config.stars.size).attr("max", "100").attr("min", "0").attr("step", "0.1").on("change", apply);
-
-  col.append("label").attr("for", "stars-exponent").attr("class", "advanced").html(" * e ^ (exponent");
-  col.append("input").attr("type", "number").attr("id", "stars-exponent").attr("class", "advanced").attr("title", "Size of the displayed star disk; exponent").attr("value", config.stars.exponent).attr("max", "3").attr("min", "-1").attr("step", "0.01").on("change", apply);
-  col.append("span").attr("class", "advanced").text(" * (magnitude + 2))  [* adaptation]");
-
-  enable($form("stars-show"));
-
-  // DSOs 
-  col = frm.append("div").attr("class", "col").attr("id", "dsos");
-
-  col.append("label").attr("class", "header").attr("title", "Deep Space Objects").attr("for", "dsos-show").html("DSOs");
-  col.append("input").attr("type", "checkbox").attr("id", "dsos-show").property("checked", config.dsos.show).on("change", apply);
-
-  col.append("label").attr("for", "dsos-limit").html("down to mag");
-  col.append("input").attr("type", "number").attr("id", "dsos-limit").attr("title", "DSO display limit (magnitude)").attr("value", config.dsos.limit).attr("max", "6").attr("min", "0").attr("step", "0.1").on("change", apply);
-
-
-  col.append("label").attr("for", "dsos-colors").html("with symbol colors");
-  col.append("input").attr("type", "checkbox").attr("id", "dsos-colors").property("checked", config.dsos.colors).on("change", apply);
-
-  col.append("label").attr("for", "dsos-color").html("or default color ");
-  col.append("input").attr("type", "color").attr("autocomplete", "off").attr("id", "dsos-style-fill").attr("title", "DSO color").property("value", config.dsos.style.fill).on("change", apply);
-
-  col.append("br");
-
-  names = formats.dsonames[config.culture] || formats.dsonames.iau;
-
-  for (let fld in names) {
-    if (!has(names, fld)) continue;
-    let dsoKeys = Object.keys(names[fld]);
-    col.append("label").attr("for", "dsos-" + fld).html("Show");
-
-    selected = 0;
-    col.append("label").attr("title", "Type of DSO name").attr("for", "dsos-" + fld + "Type").attr("class", "advanced").html("");
-    sel = col.append("select").attr("id", "dsos-" + fld + "Type").attr("class", "advanced").on("change", apply);
-    list = dsoKeys.map(function (key, i) {
-      if (key === config.stars[fld + "Type"]) selected = i;
-      return { o: key, n: names[fld][key] };
-    });
-    sel.selectAll("option").data(list).enter().append('option')
-      .attr("value", function (d) { return d.o; })
-      .text(function (d) { return d.n; });
-    sel.property("selectedIndex", selected);
-
-    col.append("label").attr("for", "dsos-" + fld).html("names");
-    col.append("input").attr("type", "checkbox").attr("id", "dsos-" + fld).property("checked", config.dsos[fld]).on("change", apply);
-  }
-
-  col.append("label").attr("for", "dsos-nameLimit").html("down to mag");
-  col.append("input").attr("type", "number").attr("id", "dsos-nameLimit").attr("title", "DSO name display limit (magnitude)").attr("value", config.dsos.nameLimit).attr("max", "6").attr("min", "0").attr("step", "0.1").on("change", apply);
-  col.append("br");
-
-  col.append("label").attr("for", "dsos-size").attr("class", "advanced").html("DSO symbol size: (base");
-  col.append("input").attr("type", "number").attr("id", "dsos-size").attr("class", "advanced").attr("title", "Size of the displayed symbol: base").attr("value", config.dsos.size).attr("max", "100").attr("min", "0").attr("step", "0.1").on("change", apply);
-
-  col.append("label").attr("for", "dsos-exponent").attr("class", "advanced").html(" * 2 [* adaptation] - magnitude) ^ exponent");
-  col.append("input").attr("type", "number").attr("id", "dsos-exponent").attr("class", "advanced").attr("title", "Size of the displayed symbol; exponent").attr("value", config.dsos.exponent).attr("max", "3").attr("min", "-1").attr("step", "0.01").on("change", apply);
-
-  enable($form("dsos-show"));
-
-  // Constellations 
-  col = frm.append("div").attr("class", "col").attr("id", "constellations");
-  col.append("label").attr("class", "header").html("Constellations");
-  //col.append("input").attr("type", "checkbox").attr("id", "constellations-show").property("checked", config.constellations.show).on("change", apply);
-
-
-  names = formats.constellations[config.culture] || formats.constellations.iau;
-
-  for (let fld in names) {
-    if (!has(names, fld)) continue;
-    let nameKeys = Object.keys(names[fld]);
-    if (nameKeys.length > 1) {
-      //Select List
-      col.append("label").attr("for", "constellations-" + fld).html("Show");
-
-      selected = 0;
-      col.append("label").attr("title", "Language of constellation names").attr("for", "constellations-" + fld + "Type").attr("class", "advanced").html("");
-      sel = col.append("select").attr("id", "constellations-" + fld + "Type").attr("class", "advanced").on("change", apply);
-      list = nameKeys.map(function (key, i) {
-        if (key === config.constellations[fld + "Type"]) selected = i;
-        return { o: key, n: names[fld][key] };
-      });
-      sel.selectAll("option").data(list).enter().append('option')
-        .attr("value", function (d) { return d.o; })
-        .text(function (d) { return d.n; });
-      sel.property("selectedIndex", selected);
-
-      col.append("label").attr("for", "constellations-" + fld).html("names");
-      col.append("input").attr("type", "checkbox").attr("id", "constellations-" + fld).property("checked", config.constellations[fld]).on("change", apply);
-    } else if (nameKeys.length === 1) {
-      //Simple field
-      col.append("label").attr("for", "constellations-" + fld).attr("class", "advanced").html(" " + names[fld][nameKeys[0]]);
-      col.append("input").attr("type", "checkbox").attr("id", "constellations-" + fld).attr("class", "advanced").property("checked", config.constellations[fld]).on("change", apply);
-    }
-  }
-  col.append("label").attr("for", "constellations-lines").html(" lines");
-  col.append("input").attr("type", "checkbox").attr("id", "constellations-lines").property("checked", config.constellations.lines).on("change", apply);
-
-  col.append("label").attr("for", "constellations-bounds").html(" boundaries");
-  col.append("input").attr("type", "checkbox").attr("id", "constellations-bounds").property("checked", config.constellations.bounds).on("change", apply);
-
-  enable($form("constellations-names"));
-
-  // graticules & planes 
-  col = frm.append("div").attr("class", "col").attr("id", "lines");
-  col.append("label").attr("class", "header").html("Lines");
-
-  col.append("label").attr("title", "Latitude/longitude grid lines").attr("for", "lines-graticule").html("Graticule");
-  col.append("input").attr("type", "checkbox").attr("id", "lines-graticule-show").property("checked", config.lines.graticule.show).on("change", apply);
-
-  col.append("label").attr("for", "lines-equatorial").html("Equator");
-  col.append("input").attr("type", "checkbox").attr("id", "lines-equatorial-show").property("checked", config.lines.equatorial.show).on("change", apply);
-
-  col.append("label").attr("for", "lines-ecliptic").html("Ecliptic");
-  col.append("input").attr("type", "checkbox").attr("id", "lines-ecliptic-show").property("checked", config.lines.ecliptic.show).on("change", apply);
-
-  col.append("label").attr("for", "lines-galactic").html("Galactic plane");
-  col.append("input").attr("type", "checkbox").attr("id", "lines-galactic-show").property("checked", config.lines.galactic.show).on("change", apply);
-
-  col.append("label").attr("for", "lines-supergalactic").html("Supergalactic plane");
-  col.append("input").attr("type", "checkbox").attr("id", "lines-supergalactic-show").property("checked", config.lines.supergalactic.show).on("change", apply);
-
-  // Other
-  col = frm.append("div").attr("class", "col").attr("id", "other");
-  col.append("label").attr("class", "header").html("Other");
-
-  col.append("label").attr("for", "mw-show").html("Milky Way");
-  col.append("input").attr("type", "checkbox").attr("id", "mw-show").property("checked", config.mw.show).on("change", apply);
-
-  col.append("label").attr("for", "mw-style-fill").attr("class", "advanced").html(" color");
-  col.append("input").attr("type", "color").attr("id", "mw-style-fill").attr("class", "advanced").attr("title", "Milky Way color").attr("value", config.mw.style.fill).on("change", apply);
-
-  col.append("label").attr("for", "mw-style-opacity").attr("class", "advanced").html(" opacity");
-  col.append("input").attr("type", "number").attr("id", "mw-style-opacity").attr("class", "advanced").attr("title", "Transparency of each Milky Way layer").attr("value", config.mw.style.opacity).attr("max", "1").attr("min", "0").attr("step", "0.01").on("change", apply);
-
-  col.append("label").attr("for", "advanced").html("Advanced options");
-  col.append("input").attr("type", "checkbox").attr("id", "advanced").property("checked", config.advanced).on("change", apply);
-
-  col.append("br");
-
-  col.append("label").attr("for", "background-fill").html("Background color");
-  col.append("input").attr("type", "color").attr("id", "background-fill").attr("title", "Background color").attr("value", config.background.fill).on("change", apply);
-
-  col.append("label").attr("for", "background-opacity").attr("class", "advanced").html("opacity");
-  col.append("input").attr("type", "number").attr("id", "background-opacity").attr("class", "advanced").attr("title", "Background opacity").attr("value", config.background.opacity).attr("max", "1").attr("min", "0").attr("step", "0.01").on("change", apply);
-
-  col.append("label").attr("title", "Star/DSO sizes are increased with higher zoom-levels").attr("for", "adaptable").attr("class", "advanced").html("Adaptable object sizes");
-  col.append("input").attr("type", "checkbox").attr("id", "adaptable").attr("class", "advanced").property("checked", config.adaptable).on("change", apply);
-
-  // General language setting
-  let langKeys = formats_all[config.culture];
-
-  selected = 0;
-  col.append("label").attr("title", "General language setting").attr("for", "lang").html("Object names ");
-  sel = col.append("select").attr("id", "lang").on("change", apply);
-  list = langKeys.map(function (key, i) {
-    if (key === config.lang) selected = i;
-    return { o: key, n: formats.constellations[config.culture].names[key] };
-  });
-  list = [{ o: "---", n: "(Select language)" }].concat(list);
-  sel.selectAll("option").data(list).enter().append('option')
-    .attr("value", function (d) { return d.o; })
-    .text(function (d) { return d.n; });
-  sel.property("selectedIndex", selected);
-
-  col = frm.append("div").attr("class", "col").attr("id", "download");
-  col.append("label").attr("class", "header").html("Download");
-
-  col.append("input").attr("type", "button").attr("id", "download-png").attr("value", "PNG Image").on("click", function () {
-    let a = d3.select("body").append("a").node(),
-      canvas = document.querySelector(parentElement + ' canvas');
-    a.download = getFilename(".png");
-    a.rel = "noopener";
-    a.href = canvas.toDataURL('image/png').replace('image/png', 'image/octet-stream');
-    a.click();
-    d3.select(a).remove();
-  });
-
-  col.append("input").attr("type", "button").attr("id", "download-svg").attr("value", "SVG File").on("click", function () {
-    exportSVG(getFilename(".svg"));
-    return false;
-  });
-
-  setLimits();
-  setUnit(config.transform);
-  setVisibility(cfg);
-  showAdvanced(config.advanced);
-
-  function resize() {
-    let src = this,
-      w = src.value;
-    if (testNumber(src) === false) return;
-    config.width = w;
-    Celestial.resize({ width: w });
-  }
-
-  function reload() {
-    let src = this,
-      trans = src.value,
-      cx = setUnit(trans, config.transform);
-    if (cx !== null) config.center[0] = cx;
-    config.transform = trans;
-    settings.set(config);
-    Celestial.reload(config);
-  }
-
-  function reproject() {
-    let src = this;
-    if (!src) return;
-    config.projection = src.value;
-    settings.set(config);
-    Celestial.reproject(config);
-  }
-
-  function turn() {
-    if (testNumber(this) === false) return;
-    if (getCenter() === false) return;
-    Celestial.rotate(config);
-  }
-
-  function getCenter() {
-    let cx = $form("centerx"), cy = $form("centery"), cz = $form("centerz"),
-      rot = [];
-
-    if (!cx || !cy) return;
-
-    if (config.transform !== "equatorial") config.center[0] = parseFloat(cx.value);
-    else {
-      let vx = parseFloat(cx.value);
-      config.center[0] = vx > 12 ? vx * 15 - 360 : vx * 15;
-    }
-    config.center[1] = parseFloat(cy.value);
-
-    let vz = parseFloat(cz.value);
-    config.center[2] = isNaN(vz) ? 0 : vz;
-
-    return cx.value !== "" && cy.value !== "";
-  }
-
-  function getFilename(ext) {
-    let dateFormat = d3.time.format("%Y%m%dT%H%M%S%Z"),
-      filename = "d3-celestial",
-      dt = Celestial.date();
-    if (dt) filename += dateFormat(dt);
-    return filename + ext;
-  }
-
-  function showConstellation() {
-    let id = this.value;
-    if (!id) return;
-    showCon(id);
-  }
-
-  function showCon(id) {
-    let z, anims = [],
-      config = globalConfig;
-    if (id === "---") {
-      Celestial.constellation = null;
-      z = Celestial.zoomBy();
-      if (z !== 1) {
-        anims.push({ param: "zoom", value: 1 / z, duration: 0 });
-      }
-      Celestial.animate(anims, false);
-      //Celestial.redraw();
-      return;
-    }
-    if (!isObject(Celestial.constellations) || !has(Celestial.constellations, id)) return;
-
-    let con = Celestial.constellations[id];
-    //transform according to settings
-    let center = transformDeg(con.center, euler[config.transform]);
-    config.center = center;
-    setCenter(config.center, config.transform);
-    //config.lines.graticule.lat.pos = [Round(con.center[0])];
-    //config.lines.graticule.lon.pos = [Round(con.center[1])];
-    //Celestial.apply(config);
-
-    //if zoomed, zoom out
-    z = Celestial.zoomBy();
-    if (z !== 1) anims.push({ param: "zoom", value: 1 / z, duration: 0 });
-    //rotate
-    anims.push({ param: "center", value: center, duration: 0 });
-    //and zoom in
-    let sc = 1 + (360 / con.scale); // > 10 ? 10 : con.scale;
-    anims.push({ param: "zoom", value: sc, duration: 0 });
-    Celestial.constellation = id;
-    //Object.assign(globalConfig, config);   
-    Celestial.animate(anims, false);
-  }
-
-  function apply() {
-    let value, src = this;
-    //Get current configuration
-    Object.assign(config, settings.set());
-
-    switch (src.type) {
-      case "checkbox": value = src.checked; enable(src); break;
-      case "number": if (testNumber(src) === false) return;
-        value = parseFloat(src.value); break;
-      case "color": if (testColor(src) === false) return;
-        value = src.value; break;
-      case "text": if (src.id.search(/fill$/) === -1) return;
-        if (testColor(src) === false) return;
-        value = src.value; break;
-      case "select-one": value = src.value; break;
-    }
-    if (value === null) return;
-    set(src.id, value);
-    if (src.id === "dsos-style-fill") {
-      set("dsos-style-stroke", value);
-      set("dsos-nameStyle-fill", value);
-    } else if (src.id === "constellations-namesType") {
-      listConstellations();
-    } else if (src.id === "lang") {
-      setLanguage(value);
-    } else if (src.id === "advanced") {
-      showAdvanced(value);
-    }
-
-    getCenter();
-    Object.assign(globalConfig, config);
-    Celestial.apply(config);
-  }
-
-  function set(prop, val) {
-    let a = prop.split("-");
-    switch (a.length) {
-      case 1: config[a[0]] = val; break;
-      case 2: config[a[0]][a[1]] = val; break;
-      case 3: config[a[0]][a[1]][a[2]] = val; break;
-      default: return;
-    }
-  }
-
-
-  function setLanguage(lang) {
-    Object.assign(config, globalConfig);
-    config.lang = lang;
-    let keys = ["constellations", "planets"];
-    for (let i = 0; i < keys.length; i++) {
-      if (has(formats[keys[i]][config.culture].names, lang)) config[keys[i]].namesType = lang;
-      else if (has(formats[keys[i]][config.culture].names, "desig")) config[keys[i]].namesType = "desig";
-      else config[keys[i]].namesType = "name";
-    }
-    if (has(formats.dsonames[config.culture].names, lang)) config.dsos.namesType = lang;
-    else config.dsos.namesType = "desig";
-    if (has(formats.starnames[config.culture].propername, lang)) config.stars.propernameType = lang;
-    else config.stars.propernameType = "desig";
-    //update cont. list
-    Object.assign(globalConfig, config);
-    update();
-    listConstellations();
-    return config;
-  }
-
-
-  function update() {
-    // Update all form fields
-    d3.selectAll(`${formContainer} input, ${formContainer} select`).each(function (d, i) {
-      if (this === undefined) return;
-      let id = this.id;
-
-      // geopos -> lat, lon
-      if (id === "lat" || id === "lon") {
-        if (isArray(config.geopos)) this.value = id === "lat" ? config.geopos[0] : config.geopos[1];
-        // center -> centerx, centery     
-      } else if (id.search(/center/) !== -1) {
-        if (isArray(config.center)) {
-          switch (id) {
-            case "centerx": this.value = config.center[0]; break;
-            case "centery": this.value = config.center[1]; break;
-            case "centerz": this.value = config.center[2] || 0; break;
-          }
-        }
-      } else if (id === "datetime" || id === "hr" || id === "min" || id === "sec" || id === "tz") {
-        return;//skip, timezone?
-      } else if (this.type !== "button") {
-        let value = get(id);
-        switch (this.type) {
-          case "checkbox": this.checked = value; enable(id); break;
-          case "number": if (testNumber(this) === false) break;
-            this.value = parseFloat(get(id)); break;
-          case "color": if (testColor(this) === false) break;
-            this.value = value; break;
-          case "text": if (id.search(/fill$/) === -1) break;
-            if (testColor(this) === false) break;
-            this.value = value; break;
-          case "select-one": this.value = value; break;
-        }
-      }
-    });
-  }
-
-  function get(id) {
-    let a = id.split("-");
-    switch (a.length) {
-      case 1: return config[a[0]];
-      case 2: return config[a[0]][a[1]];
-      case 3: return config[a[0]][a[1]][a[2]];
-      default: return;
-    }
-  }
-
-  Celestial.updateForm = update;
-  Celestial.showConstellation = showCon;
-  Celestial.setLanguage = function (lang) {
-    let cfg = settings.set();
-    if (formats_all[config.culture].indexOf(lang) !== -1) cfg = setLanguage(lang);
-    return cfg;
-  };
 }
 
 
@@ -2976,239 +2452,10 @@ let depends = {
   "planets-names": ["planets-namesType"]
 };
 
-// De/activate fields depending on selection of dependencies
-function enable(source) {
-  let fld = source.id, off;
-
-  switch (fld) {
-    case "stars-show":
-      off = !$form(fld).checked;
-      for (let i = 0; i < depends[fld].length; i++) { fldEnable(depends[fld][i], off); }
-    /* falls through */
-    case "stars-designation":
-      off = !$form("stars-designation").checked || !$form("stars-show").checked;
-      for (let i = 0; i < depends["stars-designation"].length; i++) { fldEnable(depends["stars-designation"][i], off); }
-    /* falls through */
-    case "stars-propername":
-      off = !$form("stars-propername").checked || !$form("stars-show").checked;
-      for (let i = 0; i < depends["stars-propername"].length; i++) { fldEnable(depends["stars-propername"][i], off); }
-      break;
-    case "dsos-show":
-      off = !$form(fld).checked;
-      for (let i = 0; i < depends[fld].length; i++) { fldEnable(depends[fld][i], off); }
-    /* falls through */
-    case "dsos-names":
-      off = !$form("dsos-names").checked || !$form("dsos-show").checked;
-      for (let i = 0; i < depends["dsos-names"].length; i++) { fldEnable(depends["dsos-names"][i], off); }
-      break;
-    case "planets-show":
-      off = !$form(fld).checked;
-      for (let i = 0; i < depends[fld].length; i++) { fldEnable(depends[fld][i], off); }
-    /* falls through */
-    case "planets-names":
-      off = !$form("planets-names").checked || !$form("planets-show").checked;
-      for (let i = 0; i < depends["planets-names"].length; i++) { fldEnable(depends["planets-names"][i], off); }
-      break;
-    case "constellations-names":
-    case "mw-show":
-      off = !$form(fld).checked;
-      for (let i = 0; i < depends[fld].length; i++) { fldEnable(depends[fld][i], off); }
-      break;
-  }
-}
-
-// Enable/disable field d to status off
-function fldEnable(d, off) {
-  let node = $form(d);
-  if (!node) return;
-  node.disabled = off;
-  node.style.color = off ? "#999" : "#000";
-  node.previousSibling.style.color = off ? "#999" : "#000";
-  //if (node.previousSibling.previousSibling && node.previousSibling.previousSibling.tagName === "LABEL")
-  //  node.previousSibling.previousSibling.style.color = off ? "#999" : "#000";  
-}
-
-// Error notification
-function popError(nd, err) {
-  let p = findPos(nd);
-  d3.select("#error").html(err).style({ top: px(p[1] + nd.offsetHeight + 1), left: px(p[0]), opacity: 1 });
-  nd.focus();
-}
-
-//Check numeric field
-function testNumber(node) {
-  let v, adj = node.id === "hr" || node.id === "min" || node.id === "sec" ? 1 : 0;
-  if (node.validity) {
-    v = node.validity;
-    if (v.typeMismatch || v.badInput) { popError(node, node.title + ": check field value"); return false; }
-    if (v.rangeOverflow || v.rangeUnderflow) { popError(node, node.title + " must be between " + (parseInt(node.min) + adj) + " and " + (parseInt(node.max) - adj)); return false; }
-  } else {
-    v = node.value;
-    if (!isNumber(v)) { popError(node, node.title + ": check field value"); return false; }
-    v = parseFloat(v);
-    if (v < node.min || v > node.max) { popError(node, node.title + " must be between " + (node.min + adj) + " and " + (+node.max - adj)); return false; }
-  }
-  d3.select("#error").style({ top: "-9999px", left: "-9999px", opacity: 0 });
-  return true;
-}
-
-//Check color field
-function testColor(node) {
-  let v;
-  if (node.validity) {
-    v = node.validity;
-    if (v.typeMismatch || v.badInput) { popError(node, node.title + ": check field value"); return false; }
-    if (node.value.search(/^#[0-9A-F]{6}$/i) === -1) { popError(node, node.title + ": not a color value"); return false; }
-  } else {
-    v = node.value;
-    if (v === "") return true;
-    if (v.search(/^#[0-9A-F]{6}$/i) === -1) { popError(node, node.title + ": not a color value"); return false; }
-  }
-  d3.select("#error").style({ top: "-9999px", left: "-9999px", opacity: 0 });
-  return true;
-}
-
-function setUnit(trans, old) {
-  let cx = $form("centerx");
-  if (!cx) return null;
-
-  if (old) {
-    if (trans === "equatorial" && old !== "equatorial") {
-      cx.value = (cx.value / 15).toFixed(1);
-      if (cx.value < 0) cx.value += 24;
-    } else if (trans !== "equatorial" && old === "equatorial") {
-      cx.value = (cx.value * 15).toFixed(1);
-      if (cx.value > 180) cx.value -= 360;
-    }
-  }
-  if (trans === 'equatorial') {
-    cx.min = "0";
-    cx.max = "24";
-    $form("cxunit").innerHTML = "h";
-  } else {
-    cx.min = "-180";
-    cx.max = "180";
-    $form("cxunit").innerHTML = "\u00b0";
-  }
-  return cx.value;
-}
-
-function setCenter(ctr, trans) {
-  let cx = $form("centerx"), cy = $form("centery"), cz = $form("centerz");
-  if (!cx || !cy) return;
-
+function setCenter(ctr) {
   if (ctr === null || ctr.length < 1) ctr = [0, 0, 0];
   if (ctr.length <= 2 || ctr[2] === undefined) ctr[2] = 0;
-  //config.center = ctr; 
-  if (trans !== "equatorial") cx.value = ctr[0].toFixed(1);
-  else cx.value = ctr[0] < 0 ? (ctr[0] / 15 + 24).toFixed(1) : (ctr[0] / 15).toFixed(1);
-
-  cy.value = ctr[1].toFixed(1);
-  cz.value = ctr[2] !== null ? ctr[2].toFixed(1) : 0;
   settings.set({ center: ctr });
-}
-
-// Set max input limits depending on data
-function setLimits() {
-  let t, rx = /\d+(\.\d+)?/g,
-    s, d, res = { s: 6, d: 6 },
-    config = Celestial.settings();
-
-  d = config.dsos.data;
-
-  //test dso limit
-  t = d.match(rx);
-  if (t !== null) {
-    res.d = parseFloat(t[t.length - 1]);
-  }
-
-  if (res.d !== 6) {
-    $form("dsos-limit").max = res.d;
-    $form("dsos-nameLimit").max = res.d;
-  }
-
-  s = config.stars.data;
-
-  //test star limit
-  t = s.match(rx);
-  if (t !== null) {
-    res.s = parseFloat(t[t.length - 1]);
-  }
-
-  if (res.s != 6) {
-    $form("stars-limit").max = res.s;
-    $form("stars-designationLimit").max = res.s;
-    $form("stars-propernameLimit").max = res.s;
-  }
-
-  return res;
-}
-
-// Options only visible in advanced mode
-//"stars-designationType", "stars-propernameType", "stars-size", "stars-exponent", "stars-size", "stars-exponent", //"constellations-namesType", "planets-namesType", "planets-symbolType"
-function showAdvanced(showit) {
-  let vis = showit ? "inline-block" : "none";
-  let formContainer = `${parentElement} ~ #${cfg.formcontainer}`;
-  d3.select(formContainer).selectAll(".advanced").style("display", vis);
-  d3.select(formContainer).selectAll("#label-propername").style("display", showit ? "none" : "inline-block");
-}
-
-
-function setVisibility(cfg, which) {
-  let vis, fld;
-  let formContainer = `${parentElement} ~ #${cfg.formcontainer}`;
-  if (!has(cfg, "formFields")) return;
-  if (which && has(cfg.formFields, which)) {
-    d3.select(formContainer).select("#" + which).style({ "display": "none" });
-    return;
-  }
-  // Special case for backward compatibility
-  if (cfg.form === false && cfg.location === true) {
-    d3.select(formContainer).style("display", "inline-block");
-    for (fld in cfg.formFields) {
-      if (!has(cfg.formFields, fld)) continue;
-      if (fld === "location") continue;
-      d3.select(formContainer).select("#" + fld).style({ "display": "none" });
-    }
-    return;
-  }
-  // hide if not desired
-  if (cfg.form === false) d3.select(formContainer).style("display", "none");
-
-  for (fld in cfg.formFields) {
-    if (!has(cfg.formFields, fld)) continue;
-    if (fld === "location") continue;
-    vis = cfg.formFields[fld] === false ? "none" : "block";
-    d3.select(formContainer).select("#" + fld).style({ "display": vis });
-  }
-
-}
-
-function listConstellations() {
-  let list = [], selected = 0, id, name, config = globalConfig,
-    sel = d3.select(`${parentElement} ~ #${config.formcontainer}`).select("#constellation");
-
-  Celestial.container.selectAll(".constname").each(function (d, i) {
-    id = d.id;
-    if (id === config.constellation) selected = i;
-    name = d.properties[config.constellations.namesType];
-    if (name !== id) name += " (" + id + ")";
-    list.push({ o: id, n: name });
-  });
-  if (list.length < 1 || sel.length < 1) {
-    setTimeout(listConstellations, 1000);
-    return;
-  }
-  list = [{ o: "---", n: "(Select constellation)" }].concat(list);
-
-  sel.selectAll('option').remove();
-  sel.selectAll('option').data(list).enter().append('option')
-    .attr("value", function (d) { return d.o; })
-    .text(function (d) { return d.n; });
-  sel.property("selectedIndex", selected);
-  //$form("constellation").firstChild.disabled = true;
-
-  //Celestial.constellations = list;
 }
 
 function $form(id) { return document.querySelector(`${parentElement} ~ #${cfg.formcontainer}` + " #" + id); }
@@ -3223,120 +2470,7 @@ function geo(cfg) {
     date = new Date(),
     localZone = -date.getTimezoneOffset(),
     timeZone = localZone,
-    config = settings.set(cfg),
-    formContainer = `${parentElement} ~ #${config.formcontainer}`,
-    frm = d3.select(`${formContainer} form`).insert("div", "div#general").attr("id", "loc");
-
-  let dtpick = new datetimepicker(config, function (date, tz) {
-    $form("datetime").value = dateFormat(date, tz);
-    timeZone = tz;
-    go();
-  });
-
-  if (has(config, "geopos") && config.geopos !== null && config.geopos.length === 2) geopos = config.geopos;
-  let col = frm.append("div").attr("class", "col").attr("id", "location").style("display", "none");
-  //Latitude & longitude fields
-  col.append("label").attr("title", "Location coordinates long/lat").attr("for", "lat").html("Location");
-  col.append("input").attr("type", "number").attr("id", "lat").attr("title", "Latitude").attr("placeholder", "Latitude").attr("max", "90").attr("min", "-90").attr("step", "0.0001").attr("value", geopos[0]).on("change", function () {
-    if (testNumber(this) === true) go();
-  });
-  col.append("span").html("\u00b0");
-  col.append("input").attr("type", "number").attr("id", "lon").attr("title", "Longitude").attr("placeholder", "Longitude").attr("max", "180").attr("min", "-180").attr("step", "0.0001").attr("value", geopos[1]).on("change", function () {
-    if (testNumber(this) === true) go();
-  });
-  col.append("span").html("\u00b0");
-  //Here-button if supported
-  if ("geolocation" in navigator) {
-    col.append("input").attr("type", "button").attr("value", "Here").attr("id", "here").on("click", here);
-  }
-  //Datetime field with dtpicker-button
-  col.append("label").attr("title", "Local date/time").attr("for", "datetime").html(" Date/time");
-  col.append("input").attr("type", "button").attr("id", "day-left").attr("title", "One day back").on("click", function () {
-    date.setDate(date.getDate() - 1);
-    $form("datetime").value = dateFormat(date, timeZone);
-    go();
-  });
-  col.append("input").attr("type", "text").attr("id", "datetime").attr("title", "Date and time").attr("value", dateFormat(date, timeZone))
-    .on("click", showpick, true).on("input", function () {
-      this.value = dateFormat(date, timeZone);
-      if (!dtpick.isVisible()) showpick();
-    });
-  col.append("div").attr("id", "datepick").on("click", showpick);
-  col.append("input").attr("type", "button").attr("id", "day-right").attr("title", "One day forward").on("click", function () {
-    date.setDate(date.getDate() + 1);
-    $form("datetime").value = dateFormat(date, timeZone);
-    go();
-  });
-  //Now -button sets current time & date of device  
-  col.append("input").attr("type", "button").attr("value", "Now").attr("id", "now").on("click", now);
-  //Horizon marker
-  col.append("br");
-  col.append("label").attr("title", "Show horizon marker").attr("for", "horizon-show").html(" Horizon marker");
-  col.append("input").attr("type", "checkbox").attr("id", "horizon-show").property("checked", config.horizon.show).on("change", apply);
-  //Daylight
-  col.append("label").attr("title", "Show daylight").attr("for", "daylight-show").html("Daylight sky");
-  col.append("input").attr("type", "checkbox").attr("id", "daylight-show").property("checked", config.daylight.show).on("change", apply); col.append("br");
-
-  //Show planets
-  col.append("label").attr("title", "Show solar system objects").attr("for", "planets-show").html(" Planets, Sun & Moon");
-  col.append("input").attr("type", "checkbox").attr("id", "planets-show").property("checked", config.planets.show).on("change", apply);
-  //Planet names
-  let names = formats.planets[config.culture] || formats.planets.iau;
-
-  for (let fld in names) {
-    if (!has(names, fld)) continue;
-    let keys = Object.keys(names[fld]);
-    if (keys.length > 1) {
-      //Select List
-      let txt = (fld === "symbol") ? "as" : "with";
-      col.append("label").attr("for", "planets-" + fld + "Type").html(txt);
-
-      let selected = 0;
-      col.append("label").attr("title", "Type of planet name").attr("for", "planets-" + fld + "Type").attr("class", "advanced").html("");
-      let sel = col.append("select").attr("id", "planets-" + fld + "Type").on("change", apply);
-      let list = keys.map(function (key, i) {
-        if (key === config.planets[fld + "Type"]) selected = i;
-        return { o: key, n: names[fld][key] };
-      });
-      sel.selectAll("option").data(list).enter().append('option')
-        .attr("value", function (d) { return d.o; })
-        .text(function (d) { return d.n; });
-      sel.property("selectedIndex", selected);
-
-      if (fld === "names") {
-        sel.attr("class", "advanced");
-        col.append("label").attr("for", "planets-" + fld).html("names");
-        col.append("input").attr("type", "checkbox").attr("id", "planets-" + fld).property("checked", config.planets[fld]).on("change", apply);
-      }
-    }
-  }
-
-  enable($form("planets-show"));
-  showAdvanced(config.advanced);
-
-
-  document.addEventListener("mousedown", function (event) {
-    if (!hasParent(event.target, config.datetimepicker) && dtpick.isVisible()) dtpick.hide();
-  });
-
-  function now() {
-    date.setTime(Date.now());
-    $form("datetime").value = dateFormat(date, timeZone);
-    go();
-  }
-
-  function here() {
-    navigator.geolocation.getCurrentPosition(function (pos) {
-      geopos = [Round(pos.coords.latitude, 4), Round(pos.coords.longitude, 4)];
-      $form("lat").value = geopos[0];
-      $form("lon").value = geopos[1];
-      go();
-    });
-  }
-
-  function showpick() {
-    dtpick.show(date, timeZone);
-  }
+    config = settings.set(cfg);
 
   function dateFormat(dt, tz) {
     let tzs;
@@ -3365,64 +2499,30 @@ function geo(cfg) {
     return true;
   }
 
-  function apply() {
-    Object.assign(config, settings.set());
-    config.horizon.show = !!$form("horizon-show").checked;
-    config.daylight.show = !!$form("daylight-show").checked;
-    config.planets.show = !!$form("planets-show").checked;
-    config.planets.names = !!$form("planets-names").checked;
-    config.planets.namesType = $form("planets-namesType").value;
-    config.planets.symbolType = $form("planets-symbolType").value;
-    enable($form("planets-show"));
-
-    Celestial.apply(config);
-  }
-
   function go() {
-    let lon = parseFloat($form("lon").value),
-      lat = parseFloat($form("lat").value),
-      tz;
-    //Get current configuration
     Object.assign(config, settings.set());
 
-    date = dtFormat.parse($form("datetime").value.slice(0, -6));
+    let dtc = new Date(date.valueOf() - (timeZone - localZone) * 60000);
 
-    //Celestial.apply(config);
-
-    if (!isNaN(lon) && !isNaN(lat)) {
-      if (lat !== geopos[0] || lon !== geopos[1]) {
-        geopos = [lat, lon];
-        setPosition([lat, lon], true);
-        return;
-      }
-      //if (!tz) tz = date.getTimezoneOffset();
-      $form("datetime").value = dateFormat(date, timeZone);
-
-      let dtc = new Date(date.valueOf() - (timeZone - localZone) * 60000);
-
-      zenith = Celestial.getPoint(horizontal.inverse(dtc, [90, 0], geopos), config.transform);
-      zenith[2] = 0;
-      if (config.follow === "zenith") {
-        Celestial.rotate({ center: zenith });
-      } else {
-        Celestial.redraw();
-      }
+    zenith = Celestial.getPoint(horizontal.inverse(dtc, [90, 0], geopos), config.transform);
+    zenith[2] = 0;
+    if (config.follow === "zenith") {
+      Celestial.rotate({ center: zenith });
+    } else {
+      Celestial.redraw();
     }
   }
 
 
-  function setPosition(p, settime) {
-    if (!p || !has(config, "settimezone") || config.settimezone === false) return;
+  function setPosition(position) {
+    if (!position || !has(config, "settimezone") || config.settimezone === false) return;
     let timestamp = Math.floor(date.getTime() / 1000),
       protocol = window && window.location.protocol === "https:" ? "https" : "http",
-      url = protocol + "://api.timezonedb.com/v2.1/get-time-zone?key=" + config.timezoneid + "&format=json&by=position" +
-        "&lat=" + p[0] + "&lng=" + p[1] + "&time=" + timestamp;
-    // oldZone = timeZone;
+      url = `${protocol}://api.timezonedb.com/v2.1/get-time-zone?key=${config.timezoneid}&format=json&by=position&lat=${position[0]}&lng=${position[1]}&time=${timestamp}`;
 
     loadJson(url).then(data => {
       if (data.status === "FAILED") {
-        // Location at sea inferred from longitude
-        timeZone = Math.round(p[1] / 15) * 60;
+        timeZone = Math.round(position[1] / 15) * 60;
         geoInfo = {
           gmtOffset: timeZone * 60,
           message: "Sea locatation inferred",
@@ -3432,7 +2532,6 @@ function geo(cfg) {
         timeZone = data.gmtOffset / 60;
         geoInfo = data;
       }
-      $form("datetime").value = dateFormat(date, timeZone);
       go();
     }).catch(error => {
       console.log(error);
@@ -3441,63 +2540,33 @@ function geo(cfg) {
 
   Celestial.dateFormat = dateFormat;
 
-  Celestial.date = function (dt, tz) {
-    if (!dt) return date;
+  Celestial.date = function (newDate, tz) {
     if (isValidTimezone(tz)) timeZone = tz;
-    Object.assign(config, settings.set());
-    if (dtpick.isVisible()) dtpick.hide();
-    date.setTime(dt.valueOf());
-    $form("datetime").value = dateFormat(dt, timeZone);
+    date.setTime(newDate.valueOf());
     go();
   };
+
   Celestial.timezone = function (tz) {
     if (!tz) return timeZone;
     if (isValidTimezone(tz)) timeZone = tz;
     Object.assign(config, settings.set());
-    if (dtpick.isVisible()) dtpick.hide();
-    $form("datetime").value = dateFormat(date, timeZone);
     go();
   };
+
   Celestial.position = function () { return geopos; };
+
   Celestial.location = function (loc, tz) {
     if (!loc || loc.length < 2) return geopos;
     if (isValidLocation(loc)) {
       geopos = loc.slice();
-      $form("lat").value = geopos[0];
-      $form("lon").value = geopos[1];
-      if (isValidTimezone(tz)) timeZone = tz;
-      else setPosition(geopos, true);
-    }
-  };
-  //{"date":dt, "location":loc, "timezone":tz}
-  Celestial.skyview = function (cfg) {
-    if (!cfg) return { "date": date, "location": geopos, "timezone": timeZone };
-    let valid = false;
-    if (dtpick.isVisible()) dtpick.hide();
-    if (has(cfg, "timezone") && isValidTimezone(cfg.timezone)) {
-      timeZone = cfg.timezone;
-      valid = true;
-    }
-    if (has(cfg, "date") && isValidDate(cfg.date)) {
-      date.setTime(cfg.date.valueOf());
-      $form("datetime").value = dateFormat(cfg.date, timeZone);
-      valid = true;
-    }
-    if (has(cfg, "location") && isValidLocation(cfg.location)) {
-      geopos = cfg.location.slice();
-      $form("lat").value = geopos[0];
-      $form("lon").value = geopos[1];
-      if (!has(cfg, "timezone")) {
-        setPosition(geopos, !has(cfg, "date"));
-        return;
+      if (isValidTimezone(tz)) {
+        timeZone = tz;
+        go();
       }
+      else setPosition(geopos);
     }
-    //Celestial.updateForm();
-    if (valid === false) return { "date": date, "location": geopos, "timezone": timeZone };
-    if (config.follow === "zenith") go();
-    else Celestial.redraw();
   };
-  Celestial.dtLoc = Celestial.skyview;
+
   Celestial.zenith = function () { return zenith; };
   Celestial.nadir = function () {
     let b = -zenith[1],
@@ -3507,18 +2576,14 @@ function geo(cfg) {
   };
 
   Object.defineProperty(Celestial, 'tz', {
-    get: function() {
+    get: function () {
       return timeZone;
     }
   });
 
-  if (has(config, "formFields") && (config.location === true || config.formFields.location === true)) {
-    d3.select(formContainer).select("#location").style({ "display": "inline-block" });
-  }
   //only if appropriate
   if (isValidLocation(geopos) && (config.location === true || config.formFields.location === true) && config.follow === "zenith")
     setTimeout(go, 1000);
-
 }
 ﻿
 let gmdat = {
@@ -5379,226 +4444,6 @@ Celestial.exportSVG = function (callback) {
   if (!callback) return;
   exportCallback = callback;
   exportSVG();
-};
-let datetimepicker = function (cfg, callback) {
-  let date = new Date(),
-    tzFormat = d3.time.format("%Z"),
-    tz = [{ "−12:00": -720 }, { "−11:00": -660 }, { "−10:00": -600 }, { "−09:30": -570 }, { "−09:00": -540 }, { "−08:00": -480 }, { "−07:00": -420 }, { "−06:00": -360 }, { "−05:00": -300 }, { "−04:30": -270 }, { "−04:00": -240 }, { "−03:30": -210 }, { "−03:00": -180 }, { "−02:30": -150 }, { "−02:00": -120 }, { "−01:00": -60 }, { "±00:00": 0 }, { "+01:00": 60 }, { "+02:00": 120 }, { "+03:00": 180 }, { "+03:30": 210 }, { "+04:00": 240 }, { "+04:30": 270 }, { "+05:00": 300 }, { "+05:30": 330 }, { "+05:45": 345 }, { "+06:00": 360 }, { "+06:30": 390 }, { "+07:00": 420 }, { "+08:00": 480 }, { "+08:30": 510 }, { "+08:45": 525 }, { "+09:00": 540 }, { "+09:30": 570 }, { "+10:00": 600 }, { "+10:30": 630 }, { "+11:00": 660 }, { "+12:00": 720 }, { "+12:45": 765 }, { "+13:00": 780 }, { "+14:00": 840 }],
-    months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-    days = ["Su", "M", "Tu", "W", "Th", "F", "Sa"],
-    dtrange = cfg.daterange || [],
-    years = getYears(date),
-    dateFormat = d3.time.format("%Y-%m-%d"),
-    formContainer = `${parentElement} ~ #${cfg.formcontainer}`,
-    dateContainer = `${cfg.datepickcontainer}`;
-
-  let picker = d3.select(formContainer).append("div").attr("id", dateContainer).attr("class", "celestial-date");
-  nav("left");
-  monSel();
-  yrSel();
-  nav("right");
-
-  let cal = picker.append("div").attr("id", "cal");
-
-  daySel();
-
-  timeSel();
-  tzSel();
-
-  function daySel() {
-    let mo = $form("mon").value, yr = $form("yr").value,
-      curdt = new Date(yr, mo, 1),
-      cal = d3.select(formContainer).select("#cal"),
-      today = new Date();
-    yr = parseInt(yr);
-    mo = parseInt(mo);
-    curdt.setDate(curdt.getDate() - curdt.getDay());
-    let nd = cal.node();
-    while (nd.firstChild) nd.removeChild(nd.firstChild);
-
-    for (let i = 0; i < 7; i++) {
-      cal.append("div").classed({ "date": true, "weekday": true }).html(days[i]);
-    }
-    for (let i = 0; i < 42; i++) {
-      let curmon = curdt.getMonth(), curday = curdt.getDay(), curid = dateFormat(curdt);
-      cal.append("div").classed({
-        "date": true,
-        "grey": curmon !== mo,
-        "weekend": curmon === mo && (curday === 0 || curday === 6),
-        "today": dateDiff(curdt, today) === 0,
-        "selected": dateDiff(curdt, date) === 0
-      }).attr("id", curid)
-        .on("click", pick)
-        .html(curdt.getDate().toString());
-
-      curdt.setDate(curdt.getDate() + 1);
-    }
-  }
-
-  function yrSel() {
-    picker.append("select").attr("title", "Year").attr("id", "yr").on("change", daySel);
-
-    fillYrSel();
-  }
-
-  function fillYrSel() {
-    let sel = d3.select(formContainer).select("select#yr"),
-      year = date.getFullYear(),
-      selected = 0,
-      years = getYears(date);
-
-    sel.selectAll("*").remove();
-    sel.selectAll('option').data(years).enter().append('option')
-      .text(function (d, i) {
-        if (d === year) selected = i;
-        return d.toString();
-      });
-    sel.property("selectedIndex", selected);
-  }
-
-  function monSel() {
-    let sel = picker.append("select").attr("title", "Month").attr("id", "mon").on("change", daySel),
-      selected = 0,
-      month = date.getMonth();
-
-    sel.selectAll('option').data(months).enter().append('option')
-      .attr("value", function (d, i) {
-        if (i === month) selected = i;
-        return i;
-      })
-      .text(function (d) { return d; });
-    sel.property("selectedIndex", selected);
-  }
-
-  function nav(dir) {
-    let lnk = picker.append("div").attr("id", dir).on("click", function () {
-      let mon = $form("mon"), yr = $form("yr");
-
-      if (dir === "left") {
-        if (mon.selectedIndex === 0) {
-          mon.selectedIndex = 11;
-          yr.selectedIndex--;
-        } else mon.selectedIndex--;
-      } else {
-        if (mon.selectedIndex === 11) {
-          mon.selectedIndex = 0;
-          yr.selectedIndex++;
-        } else mon.selectedIndex++;
-      }
-      daySel();
-    });
-  }
-
-  function timeSel() {
-    picker.append("input").attr("type", "number").attr("id", "hr").attr("title", "Hours").attr("max", "24").attr("min", "-1").attr("step", "1").attr("value", date.getHours()).on("change", function () { if (testNumber(this) === true) pick(); });
-
-    picker.append("input").attr("type", "number").attr("id", "min").attr("title", "Minutes").attr("max", "60").attr("min", "-1").attr("step", "1").attr("value", date.getMinutes()).on("change", function () { if (testNumber(this) === true) pick(); });
-
-    picker.append("input").attr("type", "number").attr("id", "sec").attr("title", "Seconds").attr("max", "60").attr("min", "-1").attr("step", "1").attr("value", date.getSeconds()).on("change", function () { if (testNumber(this) === true) pick(); });
-  }
-
-  function tzSel() {
-    let sel = picker.append("select").attr("title", "Time zone offset from UTC").attr("id", "tz").on("change", pick),
-      selected = 15,
-      tzOffset = -date.getTimezoneOffset();
-    sel.selectAll('option').data(tz).enter().append('option')
-      .attr("value", function (d, i) {
-        let k = Object.keys(d)[0];
-        if (d[k] === tzOffset) selected = i;
-        return d[k];
-      })
-      .text(function (d) { return Object.keys(d)[0]; });
-    sel.property("selectedIndex", selected);
-  }
-
-  function getYears(dt) {
-    let r = getDateRange(dt.getFullYear()), res = [];
-    for (let i = r[0]; i <= r[1]; i++) res.push(i);
-    return res;
-  }
-
-  function getDateRange(yr) {
-    if (!dtrange || dtrange.length < 1) return [yr - 10, yr + 10];
-
-    if (dtrange.length === 1 && isNumber(dtrange[0])) {
-      if (dtrange[0] >= 100) return [dtrange[0] - 10, dtrange[0] + 10];
-      else return [yr - dtrange[0], yr + dtrange[0]];
-    }
-    if (dtrange.length === 2 && isNumber(dtrange[0]) && isNumber(dtrange[1])) {
-      if (dtrange[1] >= 100) return [dtrange[0], dtrange[1]];
-      else return [dtrange[0] - dtrange[1], dtrange[0] + dtrange[1]];
-    }
-    return [yr - 10, yr + 10];
-  }
-
-  function select(id, val) {
-    let sel = $form(id);
-    for (let i = 0; i < sel.childNodes.length; i++) {
-      if (sel.childNodes[i].value == val) {
-        sel.selectedIndex = i;
-        break;
-      }
-    }
-  }
-
-  function set(dt) {
-    if (dt) date.setTime(dt.valueOf());
-
-    select("yr", date.getFullYear());
-    select("mon", date.getMonth());
-    daySel();
-    $form("hr").value = date.getHours();
-    $form("min").value = date.getMinutes();
-    $form("sec").value = date.getSeconds();
-  }
-
-  this.show = function (dt, tz) {
-    let nd = $form(dateContainer),
-      src = $form("datepick"),
-      left = src.offsetLeft + src.offsetWidth - nd.offsetWidth,
-      top = src.offsetTop - nd.offsetHeight - 1;
-
-    if (nd.offsetTop === -9999) {
-      date.setTime(dt.valueOf());
-      select("tz", tz);
-      set();
-      d3.select(formContainer).select(`#${dateContainer}`).style({ "top": px(top), "left": px(left), "opacity": 1 });
-      d3.select(formContainer).select("#datepick").classed("active", true);
-    } else {
-      vanish();
-    }
-  };
-
-  this.isVisible = function () {
-    if (!document.getElementById("datepick")) return false;
-    return d3.select(formContainer).select("#datepick").classed("active") === true;
-  };
-
-  this.hide = function () {
-    vanish();
-  };
-
-  function vanish() {
-    d3.select(formContainer).select(`#${dateContainer}`).style("opacity", 0);
-    d3.select("#error").style({ top: "-9999px", left: "-9999px", opacity: 0 });
-    d3.select(formContainer).select("#datepick").classed("active", false);
-    setTimeout(function () { $form(dateContainer).style.top = px(-9999); }, 600);
-  }
-
-  function pick() {
-    let h = $form("hr").value, m = $form("min").value,
-      s = $form("sec").value, tz = $form("tz").value;
-
-    if (this.id && this.id.search(/^\d/) !== -1) {
-      date = dateFormat.parse(this.id);
-    }
-    fillYrSel();
-
-    date.setHours(h, m, s);
-    set();
-
-    callback(date, tz);
-  }
 };// Copyright 2014, Jason Davies, http://www.jasondavies.com
 // See LICENSE.txt for details.
 (function() {

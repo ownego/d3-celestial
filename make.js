@@ -34,7 +34,7 @@ this.createCelestialFromConfig = createCelestialFromConfig;
     './src/kepler.js',
     './src/moon.js',
     './src/svg.js',
-    './src/datetimepicker.js',
+    // './src/datetimepicker.js',
     './lib/d3.geo.zoom.js',
     './lib/d3-queue.js'
   ],
@@ -42,7 +42,7 @@ this.createCelestialFromConfig = createCelestialFromConfig;
 
 
 target.all = function () {
-  target.test();
+  // target.test();
   target.build();
 };
 
