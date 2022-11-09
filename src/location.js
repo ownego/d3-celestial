@@ -51,6 +51,7 @@ function geo(cfg) {
   }
 
   Celestial.date = function (newDate, tz) {
+    if (!newDate) return date;
     if (isValidTimezone(tz)) timeZone = tz;
     date.setTime(newDate.valueOf());
     go();
