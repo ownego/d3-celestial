@@ -2269,11 +2269,11 @@ function setCenter(ctr) {
 
 function geo(cfg) {
   let zenith = [0, 0],
-    geopos = [0, 0],
     date = new Date(),
     localZone = -date.getTimezoneOffset(),
     timeZone = localZone,
-    config = settings.set(cfg);
+    config = settings.set(cfg),
+    geopos = config.geopos ? config.geopos : [0, 0];
 
   function isValidLocation(loc) {
     //[lat, lon] expected
@@ -2290,10 +2290,9 @@ function geo(cfg) {
   }
 
   function go() {
-    Object.assign(config, settings.set());
-
     let dtc = new Date(date.valueOf() - (timeZone - localZone) * 60000);
-
+    
+    Object.assign(config, settings.set());
     zenith = Celestial.getPoint(horizontal.inverse(dtc, [90, 0], geopos), config.transform);
     zenith[2] = 0;
     if (config.follow === "zenith") {
@@ -2309,31 +2308,33 @@ function geo(cfg) {
       protocol = window && window.location.protocol === "https:" ? "https" : "http",
       url = `${protocol}://api.timezonedb.com/v2.1/get-time-zone?key=${config.timezoneid}&format=json&by=position&lat=${position[0]}&lng=${position[1]}&time=${timestamp}`;
 
-    loadJson(url).then(data => {
-      timeZone = data.status === "FAILED" ? Math.round(position[1] / 15) * 60 : data.gmtOffset / 60;
-      go();
-    }).catch(error => {
-      console.log(error);
-    });
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        timeZone = data.status === "FAILED" ? Math.round(position[1] / 15) * 60 : data.gmtOffset / 60;
+      }).catch(() => {
+        timeZone = Math.round(position[1] / 15) * 60;
+      }).finally(() => {
+        go();
+      });
   }
 
-  Celestial.date = function (newDate, tz) {
+  Celestial.date = (newDate, tz) => {
     if (!newDate) return date;
     if (isValidTimezone(tz)) timeZone = tz;
     date.setTime(newDate.valueOf());
     go();
   };
 
-  Celestial.timezone = function (tz) {
+  Celestial.timezone = (tz) => {
     if (!tz) return timeZone;
     if (isValidTimezone(tz)) timeZone = tz;
-    Object.assign(config, settings.set());
     go();
   };
 
-  Celestial.position = function () { return geopos; };
+  Celestial.position = () => geopos;
 
-  Celestial.location = function (loc, tz) {
+  Celestial.location = (loc, tz) => {
     if (!loc || loc.length < 2) return geopos;
     if (isValidLocation(loc)) {
       geopos = loc.slice();
@@ -2345,8 +2346,8 @@ function geo(cfg) {
     }
   };
 
-  Celestial.zenith = function () { return zenith; };
-  Celestial.nadir = function () {
+  Celestial.zenith = () => zenith;
+  Celestial.nadir = () => {
     let b = -zenith[1],
       l = zenith[0] + 180;
     if (l > 180) l -= 360;
@@ -2361,7 +2362,10 @@ function geo(cfg) {
 
   //only if appropriate
   if (isValidLocation(geopos) && (config.location === true || config.formFields.location === true) && config.follow === "zenith")
-    setTimeout(go, 1000);
+    setTimeout(() => {
+      console.log(geopos);
+      setPosition(geopos);
+    }, 1000);
 }
 ﻿
 let gmdat = {

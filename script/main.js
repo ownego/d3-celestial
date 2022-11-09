@@ -10,7 +10,7 @@ let config = {
     // [longitude, latitude, orientation] all in degrees
     // null = default center [0,0,0]
     orientationfixed: true,  // Keep orientation angle the same as center[2]
-    geopos: null,       // optional initial geographic position [lat,lon] in degrees,
+    geopos: [21, 105],       // optional initial geographic position [lat,lon] in degrees,
     // overrides center
     follow: "zenith",   // on which coordinates to center the map, default: zenith, if location enabled,
     // otherwise center
@@ -144,7 +144,7 @@ let config = {
 };
 
 firstCelestial = createCelestialFromConfig(config);
-firstCelestial.addCallback(function() {
+firstCelestial.addCallback(function () {
     console.log("This is callback");
 });
 
@@ -451,3 +451,8 @@ anotherConfig.formcontainer = 'celestial-form-2';
 anotherConfig.datepickcontainer = 'celestial-date-2';
 
 thirdCelestial = createCelestialFromConfig(anotherConfig);
+
+function updateTime(event) {
+    console.log(event.target.valueAsDate);
+    firstCelestial.date(event.target.valueAsDate);
+}
