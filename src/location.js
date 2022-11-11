@@ -1,4 +1,4 @@
-/* global Celestial, loadJson, settings, horizontal, datetimepicker, config, formats, $, $form, pad, testNumber, isArray, isNumber, isValidDate, showAdvanced, enable, Round, has, hasParent, parentElement */
+/* global Celestial, loadJson, settings, horizontal, datetimepicker, config, formats, $, $form, pad, testNumber, isArray, isNumber, isValidDate, showAdvanced, enable, Round, has, parentElement */
 
 function geo(cfg) {
   let zenith = [0, 0],
@@ -26,7 +26,7 @@ function geo(cfg) {
     let dtc = new Date(date.valueOf() - (timeZone - localZone) * 60000);
     
     Object.assign(config, settings.set());
-    zenith = Celestial.getPoint(horizontal.inverse(dtc, [90, 0], geopos), config.transform);
+    zenith = horizontal.inverse(dtc, [90, 0], geopos);
     zenith[2] = 0;
     if (config.follow === "zenith") {
       Celestial.rotate({ center: zenith });
@@ -92,9 +92,8 @@ function geo(cfg) {
   });
 
   //only if appropriate
-  if (isValidLocation(geopos) && (config.location === true || config.formFields.location === true) && config.follow === "zenith")
-    setTimeout(() => {
-      console.log(geopos);
-      setPosition(geopos);
-    }, 1000);
+  // if (isValidLocation(geopos) && (config.location === true || config.formFields.location === true) && config.follow === "zenith")
+  //   setTimeout(() => {
+  //     setPosition(geopos);
+  //   }, 1000);
 }

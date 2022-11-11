@@ -1,14 +1,5 @@
-/* global Celestial, euler, transformDeg, isArray, isNumber, has, cfg */
+/* global Celestial, euler, isArray, isNumber, has, cfg */
 //load data and transform coordinates
-
-
-function getPoint(coords, trans) {
-  return transformDeg(coords, euler[trans]);
-}
- 
-function getData(d, trans) {
-  return d;
-}
 
 function getMwbackground(d) {
   // geoJson object to darken the mw-outside, prevent greying of whole map in some orientations 
@@ -106,6 +97,3 @@ function getLine(type, loc, orient) {
   }
   return res;
 }
-
-Celestial.getData = getData;
-Celestial.getPoint = getPoint;

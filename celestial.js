@@ -145,9 +145,9 @@ Celestial.display = function (config) {
             .data(getGridValues("lat", cfg.lines.graticule.lat.pos))
             .enter().append("path")
             .attr("class", "graticule_lat");
-      } else {
+      } else if (key === "equatorial") {
         container.append("path")
-          .datum(d3.geo.circle().angle([90]).origin(transformDeg(poles[key], euler[cfg.transform])))
+          .datum(d3.geo.circle().angle([90]).origin(poles["equatorial"]))
           .attr("class", key);
       }
     }
@@ -162,7 +162,7 @@ Celestial.display = function (config) {
       ]);
 
     afterLoadJsonFromAllSettled(milkyWayData, (milkyWayData) => {
-      let mw = getData(milkyWayData, cfg.transform);
+      let mw = milkyWayData;
       let mw_back = getMwbackground(mw);
       container.selectAll(parentElement + " .mway")
         .data(mw.features)
@@ -175,7 +175,7 @@ Celestial.display = function (config) {
     });
 
     afterLoadJsonFromAllSettled(constellationsData, (constellationsData) => {
-      let con = getData(constellationsData, cfg.transform);
+      let con = constellationsData;
       container.selectAll(parentElement + " .constnames")
         .data(con.features)
         .enter().append("text")
@@ -183,7 +183,7 @@ Celestial.display = function (config) {
     });
 
     afterLoadJsonFromAllSettled(constellationsLinesData, (constellationsLinesData) => {
-      let conl = getData(constellationsLinesData, cfg.transform);
+      let conl = constellationsLinesData;
       container.selectAll(parentElement + " .lines")
         .data(conl.features)
         .enter().append("path")
@@ -192,7 +192,7 @@ Celestial.display = function (config) {
     });
 
     afterLoadJsonFromAllSettled(starsData, (starsData) => {
-      let st = getData(starsData, cfg.transform);
+      let st = starsData;
 
       container.selectAll(parentElement + " .stars")
         .data(st.features)
@@ -470,16 +470,6 @@ Celestial.display = function (config) {
       });
     }
 
-    if (Celestial.data.length > 0) {
-      Celestial.data.forEach(function (d) {
-        d.redraw();
-      });
-    }
-
-    if (cfg.controls) {
-      zoomState(mapProjection.scale());
-    }
-
     if (hasCallback) {
       Celestial.runCallback();
     }
@@ -540,15 +530,6 @@ Celestial.display = function (config) {
     context.textAlign = s.align || "left";
     context.textBaseline = s.baseline || "bottom";
     context.beginPath();
-  }
-
-  function zoomState(sc) {
-    let czi = $("celestial-zoomin"),
-      czo = $("celestial-zoomout"),
-      defscale = projectionSetting.scale * width / 1024;
-    if (!czi || !czo) return;
-    czi.disabled = sc >= defscale * zoomextent * 0.99;
-    czo.disabled = sc <= defscale;
   }
 
   function setClip(setit) {
@@ -792,109 +773,36 @@ function projectionTween(a, b) {
 }
 
 let eulerAngles = {
-  "equatorial": [0.0, 0.0, 0.0],
-  "ecliptic": [0.0, 0.0, 23.4393],
-  "galactic": [93.5949, 28.9362, -58.5988],
-  "supergalactic": [137.3100, 59.5283, 57.7303]
-//  "mars": [97.5,23.5,29]
+  "equatorial": [0.0, 0.0, 0.0]
 };
 
 let poles = {
-  "equatorial": [0.0, 90.0],
-  "ecliptic": [-90.0, 66.5607],
-  "galactic": [-167.1405, 27.1283],
-  "supergalactic": [-76.2458, 15.7089]
-//  "mars": [-42.3186, 52.8865]
+  "equatorial": [0.0, 90.0]
 };
 
 Celestial.eulerAngles = function () { return eulerAngles; };
 Celestial.poles = function () { return poles; };
 
-let τ = Math.PI*2,
-    halfπ = Math.PI/2,
-    deg2rad = Math.PI/180;
+let τ = Math.PI * 2,
+  halfπ = Math.PI / 2,
+  deg2rad = Math.PI / 180;
 
-
-//Transform equatorial into any coordinates, degrees
-function transformDeg(c, euler) {
-  let res = transform( c.map( function(d) { return d * deg2rad; } ), euler);
-  return res.map( function(d) { return d / deg2rad; } );
-}
-
-//Transform equatorial into any coordinates, radians
-function transform(c, euler) {
-  let x, y, z, β, γ, λ, φ, dψ, ψ, θ,
-      ε = 1.0e-5;
-
-  if (!euler) return c; 
-
-  λ = c[0];  // celestial longitude 0..2pi
-  if (λ < 0) λ += τ; 
-  φ = c[1];  // celestial latitude  -pi/2..pi/2
-  
-  λ -= euler[0];  // celestial longitude - celestial coordinates of the native pole
-  β = euler[1];  // inclination between the poles (colatitude)
-  γ = euler[2];  // native coordinates of the celestial pole
-  
-  x = Math.sin(φ) * Math.sin(β) - Math.cos(φ) * Math.cos(β) * Math.cos(λ);
-  if (Math.abs(x) < ε) {
-    x = -Math.cos(φ + β) + Math.cos(φ) * Math.cos(β) * (1 - Math.cos(λ));
-  }
-  y = -Math.cos(φ) * Math.sin(λ);
-  
-  if (x !== 0 || y !== 0) {
-    dψ = Math.atan2(y, x);
-  } else {
-    dψ = λ - Math.PI;
-  }
-  ψ = (γ + dψ); 
-  if (ψ > Math.PI) ψ -= τ; 
-  
-  if (λ % Math.PI === 0) {
-    θ = φ + Math.cos(λ) * β;
-    if (θ > halfπ) θ = Math.PI - θ; 
-    if (θ < -halfπ) θ = -Math.PI - θ; 
-  } else {
-    z = Math.sin(φ) * Math.cos(β) + Math.cos(φ) * Math.sin(β) * Math.cos(λ);
-    if (Math.abs(z) > 0.99) {
-      θ = Math.abs(Math.acos(Math.sqrt(x*x+y*y)));
-      if (z < 0) θ *= -1; 
-    } else {
-      θ = Math.asin(z);
-    }
-  }
-  
-  return [ψ, θ];
-}
-
-  
 function getAngles(coords) {
-  if (coords === null || coords.length <= 0) return [0,0,0];
-  let rot = eulerAngles.equatorial; 
+  if (coords === null || coords.length <= 0) return [0, 0, 0];
+  let rot = eulerAngles.equatorial;
   if (!coords[2]) coords[2] = 0;
   return [rot[0] - coords[0], rot[1] - coords[1], rot[2] + coords[2]];
 }
 
 
 let euler = {
-  "ecliptic": [-90.0, 23.4393, 90.0],
-  "inverse ecliptic": [90.0, 23.4393, -90.0],
-  "galactic": [-167.1405, 62.8717, 122.9319], 
-  "inverse galactic": [122.9319, 62.8717, -167.1405],
-  "supergalactic": [283.7542, 74.2911, 26.4504],
-  "inverse supergalactic": [26.4504, 74.2911, 283.7542],
   "init": function () {
     for (let key in this) {
-      if (this[key].constructor == Array) { 
-        this[key] = this[key].map( function(val) { return val * deg2rad; } );
+      if (this[key].constructor == Array) {
+        this[key] = this[key].map(function (val) { return val * deg2rad; });
       }
     }
   },
-  "add": function(name, ang) {
-    if (!ang || !name || ang.length !== 3 || this.hasOwnProperty(name)) return; 
-    this[name] = ang.map( function(val) { return val * deg2rad; } );
-    return this[name];
-  }
 };
 
 euler.init();
@@ -992,23 +900,6 @@ Celestial.runCallback = function(dat) {
 };
 //load data and transform coordinates
 
-
-function getPoint(coords, trans) {
-  return transformDeg(coords, euler[trans]);
-}
- 
-function getData(d, trans) {
-  if (trans === "equatorial") return d;
-
-  let leo = euler[trans],
-      f = d.features;
-
-  for (let i=0; i<f.length; i++)
-    f[i].geometry.coordinates = translate(f[i], leo);
-  
-  return d;
-}
-
 function getMwbackground(d) {
   // geoJson object to darken the mw-outside, prevent greying of whole map in some orientations 
   let res = {'type': 'FeatureCollection', 'features': [ {'type': 'Feature', 
@@ -1022,19 +913,6 @@ function getMwbackground(d) {
     res.features[0].geometry.coordinates[0][i] = l1[i].slice().reverse();
   }
 
-  return res;
-}
-
-function translate(d, leo) {
-  let res = [];
-  switch (d.geometry.type) {
-    case "Point": res = transformDeg(d.geometry.coordinates, leo); break;
-    case "LineString": res.push(transLine(d.geometry.coordinates, leo)); break;
-    case "MultiLineString": res = transMultiLine(d.geometry.coordinates, leo); break;
-    case "Polygon": res.push(transLine(d.geometry.coordinates[0], leo)); break;
-    case "MultiPolygon": res.push(transMultiLine(d.geometry.coordinates[0], leo)); break;
-  }
-  
   return res;
 }
 
@@ -1119,27 +997,6 @@ function getLine(type, loc, orient) {
   return res;
 }
 
-function transLine(c, leo) {
-  let line = [];
-  
-  for (let i=0; i<c.length; i++)
-    line.push(transformDeg(c[i], leo));
-  
-  return line;
-}
-
-function transMultiLine(c, leo) {
-  let lines = [];
-  
-  for (let i=0; i<c.length; i++)
-    lines.push(transLine(c[i], leo));
-  
-  return lines;
-}
-
-Celestial.getData = getData;
-Celestial.getPoint = getPoint;
-
 
 // Central configuration object
 let globalConfig = {};
@@ -1220,9 +1077,6 @@ let settings = {
 			// grid values: "outline", "center", or [lon,...] specific position
 		  lat: {pos: [], fill: "#eee", font: "10px 'Lucida Sans Unicode', Helvetica, Arial, sans-serif"}},
     equatorial: { show: true, stroke: "#aaaaaa", width: 1.3, opacity: 0.7 },    // Show equatorial plane 
-    ecliptic: { show: true, stroke: "#66cc66", width: 1.3, opacity: 0.7 },      // Show ecliptic plane 
-    galactic: { show: false, stroke: "#cc6666", width: 1.3, opacity: 0.7 },     // Show galactic plane 
-    supergalactic: { show: false, stroke: "#cc66cc", width: 1.3, opacity: 0.7 } // Show supergalactic plane 
    //mars: { show: false, stroke:"#cc0000", width:1.3, opacity:.7 }
   }, // Background style
   background: { 
@@ -1398,70 +1252,6 @@ function isArray(o) { return o !== null && Object.prototype.toString.call(o) ===
 function isObject(o) { let type = typeof o; return type === 'function' || type === 'object' && !!o; }
 function isFunction(o) { return typeof o == 'function' || false; }
 function isValidDate(d) { return d && d instanceof Date && !isNaN(d); }
-function fileExists(url) {
-  let http = new XMLHttpRequest();
-  http.open('HEAD', url, false);
-  http.send();
-  return http.status != 404;
-}
-
-function findPos(o) {
-  let l = 0, t = 0;
-  if (o.offsetParent) {
-    do {
-      l += o.offsetLeft;
-      t += o.offsetTop;
-    } while ((o = o.offsetParent) !== null);
-  }
-  return [l, t];
-}
-
-function hasParent(t, id) {
-  while (t.parentNode) {
-    if (t.id === id) return true;
-    t = t.parentNode;
-  }
-  return false;
-}
-
-function attach(node, event, func) {
-  if (node.addEventListener) node.addEventListener(event, func, false);
-  else node.attachEvent("on" + event, func);
-}
-
-function stopPropagation(e) {
-  if (typeof e.stopPropagation != "undefined") e.stopPropagation();
-  else e.cancelBubble = true;
-}
-
-function dateDiff(dt1, dt2, type) {
-  let diff = dt2.valueOf() - dt1.valueOf(),
-    tp = type || "d";
-  switch (tp) {
-    case 'y': case 'yr': diff /= 31556926080; break;
-    case 'm': case 'mo': diff /= 2629800000; break;
-    case 'd': case 'dy': diff /= 86400000; break;
-    case 'h': case 'hr': diff /= 3600000; break;
-    case 'n': case 'mn': diff /= 60000; break;
-    case 's': case 'sec': diff /= 1000; break;
-    case 'ms': break;
-  }
-  return Math.floor(diff);
-}
-
-function dateParse(s) {
-  if (!s) return;
-  let t = s.split(".");
-  if (t.length < 1) return;
-  t = t[0].split("-");
-  t[0] = t[0].replace(/\D/g, "");
-  if (!t[0]) return;
-  t[1] = t[1] ? t[1].replace(/\D/g, "") : "1";
-  t[2] = t[2] ? t[2].replace(/\D/g, "") : "1";
-  //Fraction -> h:m:s
-  return new Date(Date.UTC(t[0], t[1] - 1, t[2]));
-}
-
 
 function interpolateAngle(a1, a2, t) {
   a1 = (a1 * deg2rad + τ) % τ;
@@ -1601,7 +1391,7 @@ function geo(cfg) {
     let dtc = new Date(date.valueOf() - (timeZone - localZone) * 60000);
     
     Object.assign(config, settings.set());
-    zenith = Celestial.getPoint(horizontal.inverse(dtc, [90, 0], geopos), config.transform);
+    zenith = horizontal.inverse(dtc, [90, 0], geopos);
     zenith[2] = 0;
     if (config.follow === "zenith") {
       Celestial.rotate({ center: zenith });
@@ -1667,11 +1457,10 @@ function geo(cfg) {
   });
 
   //only if appropriate
-  if (isValidLocation(geopos) && (config.location === true || config.formFields.location === true) && config.follow === "zenith")
-    setTimeout(() => {
-      console.log(geopos);
-      setPosition(geopos);
-    }, 1000);
+  // if (isValidLocation(geopos) && (config.location === true || config.formFields.location === true) && config.follow === "zenith")
+  //   setTimeout(() => {
+  //     setPosition(geopos);
+  //   }, 1000);
 }
 // Copyright 2014, Jason Davies, http://www.jasondavies.com
 // See LICENSE.txt for details.

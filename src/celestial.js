@@ -1,4 +1,4 @@
-/* global module, require, topojson, settings, bvcolor, projections, projectionTween, poles, eulerAngles, euler, getAngles, transformDeg, getData, listConstellations, getMwbackground, getGridValues, Canvas, halfπ, $, px, Round, has, hasCallback, isArray, isNumber, arrayfy, form, geo, fldEnable, setCenter, interpolateAngle, formats */
+/* global module, require, topojson, settings, bvcolor, projections, projectionTween, poles, eulerAngles, euler, getAngles, listConstellations, getMwbackground, getGridValues, Canvas, halfπ, $, px, Round, has, hasCallback, isArray, isNumber, arrayfy, form, geo, fldEnable, setCenter, interpolateAngle, formats */
 let scopedContainer = null;
 
 let Celestial = {
@@ -141,9 +141,9 @@ Celestial.display = function (config) {
             .data(getGridValues("lat", cfg.lines.graticule.lat.pos))
             .enter().append("path")
             .attr("class", "graticule_lat");
-      } else {
+      } else if (key === "equatorial") {
         container.append("path")
-          .datum(d3.geo.circle().angle([90]).origin(transformDeg(poles[key], euler[cfg.transform])))
+          .datum(d3.geo.circle().angle([90]).origin(poles["equatorial"]))
           .attr("class", key);
       }
     }
@@ -158,7 +158,7 @@ Celestial.display = function (config) {
       ]);
 
     afterLoadJsonFromAllSettled(milkyWayData, (milkyWayData) => {
-      let mw = getData(milkyWayData, cfg.transform);
+      let mw = milkyWayData;
       let mw_back = getMwbackground(mw);
       container.selectAll(parentElement + " .mway")
         .data(mw.features)
@@ -171,7 +171,7 @@ Celestial.display = function (config) {
     });
 
     afterLoadJsonFromAllSettled(constellationsData, (constellationsData) => {
-      let con = getData(constellationsData, cfg.transform);
+      let con = constellationsData;
       container.selectAll(parentElement + " .constnames")
         .data(con.features)
         .enter().append("text")
@@ -179,7 +179,7 @@ Celestial.display = function (config) {
     });
 
     afterLoadJsonFromAllSettled(constellationsLinesData, (constellationsLinesData) => {
-      let conl = getData(constellationsLinesData, cfg.transform);
+      let conl = constellationsLinesData;
       container.selectAll(parentElement + " .lines")
         .data(conl.features)
         .enter().append("path")
@@ -188,7 +188,7 @@ Celestial.display = function (config) {
     });
 
     afterLoadJsonFromAllSettled(starsData, (starsData) => {
-      let st = getData(starsData, cfg.transform);
+      let st = starsData;
 
       container.selectAll(parentElement + " .stars")
         .data(st.features)
@@ -466,16 +466,6 @@ Celestial.display = function (config) {
       });
     }
 
-    if (Celestial.data.length > 0) {
-      Celestial.data.forEach(function (d) {
-        d.redraw();
-      });
-    }
-
-    if (cfg.controls) {
-      zoomState(mapProjection.scale());
-    }
-
     if (hasCallback) {
       Celestial.runCallback();
     }
@@ -536,15 +526,6 @@ Celestial.display = function (config) {
     context.textAlign = s.align || "left";
     context.textBaseline = s.baseline || "bottom";
     context.beginPath();
-  }
-
-  function zoomState(sc) {
-    let czi = $("celestial-zoomin"),
-      czo = $("celestial-zoomout"),
-      defscale = projectionSetting.scale * width / 1024;
-    if (!czi || !czo) return;
-    czi.disabled = sc >= defscale * zoomextent * 0.99;
-    czo.disabled = sc <= defscale;
   }
 
   function setClip(setit) {
