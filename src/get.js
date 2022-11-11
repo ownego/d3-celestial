@@ -1,4 +1,4 @@
-/* global Celestial, Kepler, euler, transformDeg, isArray, isNumber, has, cfg */
+/* global Celestial, euler, transformDeg, isArray, isNumber, has, cfg */
 //load data and transform coordinates
 
 
@@ -7,61 +7,7 @@ function getPoint(coords, trans) {
 }
  
 function getData(d, trans) {
-  if (trans === "equatorial") return d;
-
-  let leo = euler[trans],
-      f = d.features;
-
-  for (let i=0; i<f.length; i++)
-    f[i].geometry.coordinates = translate(f[i], leo);
-  
   return d;
-}
-
-function getPlanets(d) {
-  let res = [];
-  
-  for (let key in d) {
-    if (!has(d, key)) continue;
-    if (cfg.planets.which.indexOf(key) === -1) continue;
-    let dat = Kepler().id(key);
-    if (has(d[key], "parent")) dat.parentBody(d[key].parent);
-    dat.elements(d[key].elements[0]).params(d[key]);
-    if (key === "ter") 
-      Celestial.origin = dat;
-    else res.push(dat);
-  }
-  //res.push(Kepler().id("sol"));
-  //res.push(Kepler().id("lun"));
-  return res;
-}
-
-
-function getPlanet(id, dt) {
-  dt = dt || Celestial.date();
-  if (!Celestial.origin) return;
-
-  let o = Celestial.origin(dt).spherical(), res;
-     
-  Celestial.container.selectAll(".planet").each(function(d) {
-    if (id === d.id()) {
-      res = d(dt).equatorial(o);
-    }
-  });
-  return res;
-}
-
-function getConstellationList(d) {
-  let res = {},
-      f = d.features;
-      
-  for (let i=0; i<f.length; i++) {
-    res[f[i].id] = {
-      center: f[i].properties.display.slice(0,2),
-      scale: f[i].properties.display[2]
-    };
-  }
-  return res;
 }
 
 function getMwbackground(d) {
@@ -77,23 +23,6 @@ function getMwbackground(d) {
     res.features[0].geometry.coordinates[0][i] = l1[i].slice().reverse();
   }
 
-  return res;
-}
-
-function getTimezones() {
-  
-}
-
-function translate(d, leo) {
-  let res = [];
-  switch (d.geometry.type) {
-    case "Point": res = transformDeg(d.geometry.coordinates, leo); break;
-    case "LineString": res.push(transLine(d.geometry.coordinates, leo)); break;
-    case "MultiLineString": res = transMultiLine(d.geometry.coordinates, leo); break;
-    case "Polygon": res.push(transLine(d.geometry.coordinates[0], leo)); break;
-    case "MultiPolygon": res.push(transMultiLine(d.geometry.coordinates[0], leo)); break;
-  }
-  
   return res;
 }
 
@@ -178,24 +107,5 @@ function getLine(type, loc, orient) {
   return res;
 }
 
-function transLine(c, leo) {
-  let line = [];
-  
-  for (let i=0; i<c.length; i++)
-    line.push(transformDeg(c[i], leo));
-  
-  return line;
-}
-
-function transMultiLine(c, leo) {
-  let lines = [];
-  
-  for (let i=0; i<c.length; i++)
-    lines.push(transLine(c[i], leo));
-  
-  return lines;
-}
-
 Celestial.getData = getData;
 Celestial.getPoint = getPoint;
-Celestial.getPlanet = getPlanet;

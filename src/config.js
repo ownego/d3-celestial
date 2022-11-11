@@ -22,7 +22,7 @@ let settings = {
   form: false,        // Display settings form
   location: false,    // Display location settings, deprecated, use formFields
   // Set visiblity for each group of fields of the form
-  formFields: {"location": true, "general": true, "stars": true, "dsos": true, "constellations": true, "lines": true, "other": true, download: false},
+  formFields: {"location": true, "general": true, "stars": true, "constellations": true, "lines": true, "other": true, download: false},
   advanced: true,     // Display fewer form fields if false
   daterange: [],      // Calender date range; null: displaydate-+10; [n<100]: displaydate-+n; [yr]: yr-+10; 
                       // [yr, n<100]: [yr-n, yr+n]; [yr0, yr1]
@@ -53,38 +53,6 @@ let settings = {
     size: 7,       // Scale size (radius) of star circle in pixels
     exponent: -0.28, // Scale exponent for star size, larger = more linear
     data: "stars.6.json" // Data source for stellar data
-  },
-  dsos: {
-    show: true,    // Show Deep Space Objects 
-    limit: 6,      // Show only DSOs brighter than limit magnitude
-    colors: true,  // Show DSOs in symbol colors if true, use style setting below if false
-    style: { fill: "#cccccc", stroke: "#cccccc", width: 2, opacity: 1 }, // Default style for dsos
-    names: true,   // Show DSO names
-    namesType: "desig",  // Type of displayed name: desig, name, or 15 different language codes from dsonames.json
-    nameStyle: { fill: "#cccccc", font: "11px 'Lucida Sans Unicode', 'DejaVu Sans', Helvetica, Arial, serif", align: "left", baseline: "bottom" },
-    nameLimit: 4,  // Show only names for DSOs brighter than nameLimit
-    size: null,    // Optional seperate scale size for DSOs, null = stars.size
-    exponent: 1.4, // Scale exponent for DSO size, larger = more non-linear
-    data: "dsos.bright.json",  // Data source for DSOs
-    symbols: {  // DSO symbol styles
-      gg: {shape: "circle", fill: "#ff0000"},                                 // Galaxy cluster
-      g:  {shape: "ellipse", fill: "#ff0000"},                                // Generic galaxy
-      s:  {shape: "ellipse", fill: "#ff0000"},                                // Spiral galaxy
-      s0: {shape: "ellipse", fill: "#ff0000"},                                // Lenticular galaxy
-      sd: {shape: "ellipse", fill: "#ff0000"},                                // Dwarf galaxy
-      e:  {shape: "ellipse", fill: "#ff0000"},                                // Elliptical galaxy
-      i:  {shape: "ellipse", fill: "#ff0000"},                                // Irregular galaxy
-      oc: {shape: "circle", fill: "#ff9900", stroke: "#ff9900", width: 2},    // Open cluster
-      gc: {shape: "circle", fill: "#ff9900"},                                 // Globular cluster
-      en: {shape: "square", fill: "#ff00cc"},                                 // Emission nebula
-      bn: {shape: "square", fill: "#ff00cc"},                                 // Generic bright nebula
-      sfr:{shape: "square", fill: "#cc00ff"},                                 // Star forming region
-      rn: {shape: "square", fill: "#0000ff"},                                 // Reflection nebula
-      pn: {shape: "diamond", fill: "#00cccc"},                                // Planetary nebula 
-      snr:{shape: "diamond", fill: "#ff00cc"},                                // Supernova remnant
-      dn: {shape: "square", fill: "#999999", stroke: "#999999", width: 2},    // Dark nebula 
-      pos:{shape: "marker", fill: "#cccccc", stroke: "#cccccc", width: 1.5}   // Generic marker
-    }
   },
   constellations: {
     show: true,    // Show constellations 
@@ -131,35 +99,6 @@ let settings = {
   },  
   daylight: {  //Show approximate state of sky at selected time
     show: false
-  },
-  planets: {  //Show planet locations, if date-time is set
-    show: false, 
-    // 3-letter designations of all solar system objects that should be displayed
-    which: ["sol", "mer", "ven", "ter", "lun", "mar", "jup", "sat", "ura", "nep", "cer", "plu"],
-    // Symbols as unicode codepoints, letter abbreviations and colors to be displayed
-    symbols: {
-      "sol": {symbol: "\u2609", letter:"Su", fill: "#ffff00", size: 12},
-      "mer": {symbol: "\u263f", letter:"Me", fill: "#cccccc"},
-      "ven": {symbol: "\u2640", letter:"V", fill: "#eeeecc"},
-      "ter": {symbol: "\u2295", letter:"T", fill: "#00ccff"},
-      "lun": {symbol: "\u25cf", letter:"L", fill: "#ffffff", size: 12},
-      "mar": {symbol: "\u2642", letter:"Ma", fill: "#ff6600"},
-      "cer": {symbol: "\u26b3", letter:"C", fill: "#cccccc"},
-      "ves": {symbol: "\u26b6", letter:"Ma", fill: "#cccccc"},
-      "jup": {symbol: "\u2643", letter:"J", fill: "#ffaa33"},
-      "sat": {symbol: "\u2644", letter:"Sa", fill: "#ffdd66"},
-      "ura": {symbol: "\u2645", letter:"U", fill: "#66ccff"},
-      "nep": {symbol: "\u2646", letter:"N", fill: "#6666ff"},
-      "plu": {symbol: "\u2647", letter:"P", fill: "#aaaaaa"},
-      "eri": {symbol: "\u26aa", letter:"E", fill: "#eeeeee"}
-    },
-    // Style options for planetary symbols
-    symbolStyle: { fill: "#cccccc", opacity:1, font: "bold 20px 'DejaVu Sans Mono', 'Arial Unicode MS', sans-serif", align: "center", baseline: "middle" },
-    symbolType: "symbol",  // Type of planetary symbol to be displayed: 'symbol', 'letter' or 'disk'
-    names: false,  // Show name next to symbol
-    // Style options for planetary names
-    nameStyle: { fill: "#cccccc", font: "14px 'Lucida Sans Unicode', 'DejaVu Sans', sans-serif", align: "right", baseline: "top" },
-    namesType: "en"  // Language in which the name is displayed, options desig, ar, cn, en, fr, de, gr, il, in, it, jp, lat, ru, es
   },
   set: function(cfg) {  // Override defaults with values of cfg
     let prop, key, config = {}, res = {};
@@ -210,26 +149,6 @@ let settings = {
     if (!res.culture || res.culture.search(/^cn$/) === -1) res.culture = "iau";
 
     if (cfg) {
-      // Adapt legacy name parameters
-      if (has(cfg, "stars")) {
-        // names -> designation
-        if (has(cfg.stars, "names")) res.stars.designation = cfg.stars.names;
-        if (has(cfg.stars, "namelimit")) res.stars.designationLimit = cfg.stars.namelimit;
-        if (has(cfg.stars, "namestyle")) Object.assign(res.stars.designationStyle, cfg.stars.namestyle);    
-        // proper -> propername
-        if (has(cfg.stars, "proper")) res.stars.propername = cfg.stars.proper;
-        if (has(cfg.stars, "propernamelimit")) res.stars.propernameLimit = cfg.stars.propernamelimit;
-        if (has(cfg.stars, "propernamestyle")) Object.assign(res.stars.propernameStyle, cfg.stars.propernamestyle);
-      }
-
-      if (has(cfg, "dsos")) {
-        // names, desig -> namesType
-        //if (has(cfg.dsos, "names") && cfg.dsos.names === true) res.dsos.namesType = "name";
-        if (has(cfg.dsos, "desig") && cfg.dsos.desig === true) res.dsos.namesType = "desig";
-        if (has(cfg.dsos, "namelimit")) res.dsos.nameLimit = cfg.dsos.namelimit;
-        if (has(cfg.dsos, "namestyle")) Object.assign(res.dsos.nameStyle, cfg.dsos.namestyle);    
-      }
-      
       if (has(cfg, "constellations")) {
         // names, desig -> namesType
         if (has(cfg.constellations, "show") && cfg.constellations.show === true) res.constellations.names = true;
@@ -239,24 +158,11 @@ let settings = {
         if (res.constellations.namesType === "iau") res.constellations.namesType = "name";
         if (has(cfg.constellations, "namestyle")) Object.assign(res.constellations.nameStyle, cfg.constellations.namestyle);
         if (has(cfg.constellations, "linestyle")) Object.assign(res.constellations.lineStyle, cfg.constellations.linestyle);
-        if (has(cfg.constellations, "boundstyle")) Object.assign(res.constellations.boundStyle, cfg.constellations.boundstyle);
-      }
-
-      if (has(cfg, "planets")) {
-        if (has(cfg.planets, "style")) Object.assign(res.planets.style, cfg.planets.symbolStyle);      
       }
     }
     //Assign default name types if none given
-    if (!res.stars.designationType || res.stars.designationType === "") res.stars.designationType = "desig";
-    if (!has(formats.starnames[res.culture].designation, res.stars.designationType)) res.designationType = "desig";
-    if (!res.stars.propernameType || res.stars.propernameType === "") res.stars.propernameType = "name";
-    if (!has(formats.starnames[res.culture].propername, res.stars.propernameType)) res.propernameType = "name";
-    if (!res.dsos.namesType || res.dsos.namesType === "") res.dsos.namesType = "desig";
     if (!res.constellations.namesType || res.constellations.namesType === "") res.constellations.namesType = "desig";
     if (!has(formats.constellations[res.culture].names, res.constellations.namesType)) res.constellations.namesType = "name";
-    if (!res.planets.symbolType || res.planets.symbolType === "") res.planets.symbolType = "symbol";
-    if (!res.planets.namesType || res.planets.namesType === "") res.planets.namesType = "desig";
-    if (!has(formats.planets[res.culture].names, res.planets.namesType)) res.planets.namesType = "desig";
     //Expand all parameters that can be arrays into arrays, no need to test it later
     res.constellations.nameStyle.font = arrayfy(res.constellations.nameStyle.font);
     res.constellations.nameStyle.opacity = arrayfy(res.constellations.nameStyle.opacity);
@@ -271,7 +177,6 @@ let settings = {
 };
 
 function arrayfy(o) {
-  let res;
   if (!isArray(o)) return [o, o, o];  //It saves some work later, OK?
   if (o.length >= 3) return o;
   if (o.length === 1) return [o[0], o[0], o[0]];
@@ -298,46 +203,6 @@ let projections = {
 Celestial.projections = function () { return projections; };
 
 let formats = {
-  "starnames": {
-    // "name":"","bayer":"","flam":"","var":"","gl":"","hd":"","c":"","desig":""
-    "iau": {
-      "designation": {
-        "desig": "Designation",     
-        "bayer": "Bayer",
-        "flam": "Flamsteed",
-        "var": "Variable",
-        "gl": "Gliese",
-        "hd": "Draper",
-        "hip": "Hipparcos"},
-      "propername": {
-        "name": "IAU Name",
-        "ar": "Arabic", 
-        "zh": "Chinese",
-        "en": "English",
-        "fi": "Finnish", 
-        "fr": "French", 
-        "de": "German",
-        "el": "Greek", 
-        "he": "Hebrew", 
-        "hi": "Hindi", 
-        "it": "Italian", 
-        "ja": "Japanese", 
-        "ko": "Korean", 
-        "la": "Latin",
-        "fa": "Persian", 
-        "ru": "Russian", 
-        "es": "Spanish",
-        "tr": "Turkish"}
-    },
-    "cn": {
-      "propername": {
-        "name": "Proper name",
-        "en": "English",
-        "pinyin": "Pinyin"},
-      "designation": { 
-        "desig": "IAU Designation"}
-    }
-  },
   "constellations": {
     "iau": {
       "names": {
@@ -371,75 +236,9 @@ let formats = {
         "pinyin": "Pinyin"}
     }             
   },
-  "planets": {
-    "iau": {
-      "symbol": {
-        "symbol": "\u263e Symbol",
-        "letter": "\u216c Letter",
-        "disk": "\u25cf Disk"},
-      "names": {
-        "desig": "Designation",
-        "ar": "Arabic",
-        "zh": "Chinese",
-        "en": "English",
-        "fr": "French",
-        "de": "German",
-        "el": "Greek",
-        "he": "Hebrew",
-        "hi": "Hindi",
-        "it": "Italian",
-        "ja": "Japanese",
-        "ko": "Korean", 
-        "la": "Latin",
-        "fa": "Persian", 
-        "ru": "Russian",
-        "es": "Spanish"}
-    },
-    "cn": {
-      "symbol": {
-        "symbol": "\u263e Symbol",
-        "letter": "\u216c Letter",
-        "disk": "\u25cf Disk"},
-      "names": {
-        "desig": "Designation",
-        "name": "Chinese",
-        "pinyin": "Pinyin",
-        "en": "English"}
-    }
-  },
-  "dsonames": {
-    "iau": {
-      "names": {
-        "desig": "Designation",
-        "name": "English",
-        "ar": "Arabic", 
-        "zh": "Chinese",
-        "fi": "Finnish", 
-        "fr": "French", 
-        "de": "German",
-        "el": "Greek", 
-        //"he": "Hebrew",
-        "hi": "Hindi", 
-        "it": "Italian", 
-        "ja": "Japanese", 
-        "ko": "Korean", 
-        "la": "Latin",
-        "fa": "Persian", 
-        "ru": "Russian", 
-        "es": "Spanish",
-        "tr": "Turkish"}
-    },
-    "cn": {
-      "names": {
-        "desig": "Designation",
-        "name": "Chinese",
-        "pinyin": "Pinyin",
-        "en": "English"}
-    }
-  }
 };
 
 let formats_all = {
-  "iau": Object.keys(formats.constellations.iau.names).concat(Object.keys(formats.planets.iau.names)).filter( function(value, index, self) { return self.indexOf(value) === index; } ),
-  "cn":  Object.keys(formats.constellations.cn.names).concat(Object.keys(formats.starnames.cn.propername)).filter( function(value, index, self) { return self.indexOf(value) === index; } )
+  "iau": Object.keys(formats.constellations.iau.names).filter( function(value, index, self) { return self.indexOf(value) === index; } ),
+  "cn":  Object.keys(formats.constellations.cn.names).filter( function(value, index, self) { return self.indexOf(value) === index; } )
 };

@@ -35,7 +35,6 @@ function geo(cfg) {
     }
   }
 
-
   function setPosition(position) {
     let timestamp = Math.floor(date.getTime() / 1000),
       protocol = window && window.location.protocol === "https:" ? "https" : "http",
@@ -53,7 +52,6 @@ function geo(cfg) {
   }
 
   Celestial.date = (newDate, tz) => {
-    if (!newDate) return date;
     if (isValidTimezone(tz)) timeZone = tz;
     date.setTime(newDate.valueOf());
     go();
