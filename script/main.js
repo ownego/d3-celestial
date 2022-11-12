@@ -118,11 +118,11 @@ let config = {
     },
     lines: {  // Display & styles for graticule & some planes
         graticule: {
-            show: true, stroke: "#cccccc", width: 0.1, opacity: 0.8, // Changable
+            show: true, stroke: "#cccccc", width: 1, opacity: 1, // Changable
             // grid values: "outline", "center", or [lat,...] specific position
             lon: { pos: [""], fill: "#eee", font: "10px Helvetica, Arial, sans-serif" },
             // grid values: "outline", "center", or [lon,...] specific position
-            lat: { pos: [""], fill: "#eee", font: "10px Helvetica, Arial, sans-serif" }
+            lat: { pos: [0, 0], fill: "#eee", font: "10px Helvetica, Arial, sans-serif" }
         },
         equatorial: { show: false, stroke: "#aaaaaa", width: 1.3, opacity: 0.7 },
         ecliptic: { show: false, stroke: "#66cc66", width: 1.3, opacity: 0.7 },

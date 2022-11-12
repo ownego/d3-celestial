@@ -90,10 +90,4 @@ function geo(cfg) {
       return timeZone;
     }
   });
-
-  //only if appropriate
-  // if (isValidLocation(geopos) && (config.location === true || config.formFields.location === true) && config.follow === "zenith")
-  //   setTimeout(() => {
-  //     setPosition(geopos);
-  //   }, 1000);
 }
