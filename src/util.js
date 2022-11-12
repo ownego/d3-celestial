@@ -1,18 +1,11 @@
 /* global τ, halfπ, deg2rad, parentElement */
-function $(id) { return document.querySelector(parentElement + " #" + id); }
-function px(n) { return n + "px"; }
-function Round(x, dg) { return (Math.round(Math.pow(10, dg) * x) / Math.pow(10, dg)); }
-function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }
-function pad(n) { return n < 10 ? '0' + n : n; }
-
+const px = (n) => `${n}px`;
+const Round = (x, dg) => Math.round(Math.pow(10, dg) * x) / Math.pow(10, dg);
+const sign = (x) => x ? (x < 0 ? -1 : 1) : 0;
 
 function has(o, key) { return o !== null && hasOwnProperty.call(o, key); }
-function when(o, key, val) { return o !== null && hasOwnProperty.call(o, key) ? o[key] : val; }
 function isNumber(n) { return n !== null && !isNaN(parseFloat(n)) && isFinite(n); }
 function isArray(o) { return o !== null && Object.prototype.toString.call(o) === "[object Array]"; }
-function isObject(o) { let type = typeof o; return type === 'function' || type === 'object' && !!o; }
-function isFunction(o) { return typeof o == 'function' || false; }
-function isValidDate(d) { return d && d instanceof Date && !isNaN(d); }
 
 function interpolateAngle(a1, a2, t) {
   a1 = (a1 * deg2rad + τ) % τ;

@@ -1,4 +1,4 @@
-/* global Celestial, loadJson, settings, horizontal, datetimepicker, config, formats, $, $form, pad, testNumber, isArray, isNumber, isValidDate, showAdvanced, enable, Round, has, parentElement */
+/* global Celestial, loadJson, settings, horizontal, datetimepicker, config, formats, $, $form, pad, testNumber, isArray, isNumber, showAdvanced, enable, has, parentElement */
 
 function geo(cfg) {
   let zenith = [0, 0],
