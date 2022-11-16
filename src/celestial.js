@@ -89,7 +89,7 @@ Celestial.display = function (config) {
             .datum(d3.geo.circle().angle([90]).origin(poles["equatorial"]))
             .attr("class", key);
           break;
-        default: 6`     QW51  `
+        default:
           break;
       }
     }
