@@ -15,8 +15,15 @@ let ANIMDISTANCE = 0.035,  // Rotation animation threshold, ~2deg in radians
 
 let cfg, mapProjection, parentElement, map;
 
+let starMapData = {};
+
 // Show it all, with the given config, otherwise with default settings
 Celestial.display = function (config) {
+  if (window.starMapData) {
+    starMapData = window.starMapData;
+  } else {
+    window.starMapData = starMapData;
+  }
   let container = scopedContainer;
 
   //Mash config with default settings, todo: if globalConfig exists, make another one
@@ -82,59 +89,41 @@ Celestial.display = function (config) {
     for (let key in cfg.lines) {
       switch (key) {
         case "graticule":
-          container.append("path").datum(graticule).attr("class", "graticule");
-          break;
-        case "equatorial":
-          container.append("path")
-            .datum(d3.geo.circle().angle([90]).origin(poles["equatorial"]))
-            .attr("class", key);
+          starMapData[key] = graticule;
           break;
         default:
           break;
       }
     }
 
-    // Load data
-    let [milkyWayData, constellationsData, constellationsLinesData, starsData]
-      = await Promise.allSettled([
-        loadJson(path + "mw.json"),
-        loadJson(path + filename("constellations")),
-        loadJson(path + filename("constellations", "lines")),
-        loadJson(path + cfg.stars.data),
-      ]);
 
-    afterLoadJsonFromAllSettled(milkyWayData, (milkyWayData) => {
-      let mw_back = getMwbackground(milkyWayData);
-      container.selectAll(parentElement + " .mway")
-        .data(milkyWayData.features)
-        .enter().append("path")
-        .attr("class", "mw");
-      container.selectAll(parentElement + " .mwaybg")
-        .data(mw_back.features)
-        .enter().append("path")
-        .attr("class", "mwbg");
-    });
+    if (!starMapData.milkyWayData || !starMapData.mw_back || !starMapData.constellationsData || !starMapData.constellationsLinesData || !starMapData.starsData) {
+      // Load data
+      let [milkyWayData, constellationsData, constellationsLinesData, starsData]
+        = await Promise.allSettled([
+          loadJson(path + "mw.json"),
+          loadJson(path + filename("constellations")),
+          loadJson(path + filename("constellations", "lines")),
+          loadJson(path + cfg.stars.data),
+        ]);
 
-    afterLoadJsonFromAllSettled(constellationsData, (constellationsData) => {
-      container.selectAll(parentElement + " .constnames")
-        .data(constellationsData.features)
-        .enter().append("text")
-        .attr("class", "constname");
-    });
+      extractData(milkyWayData, (milkyWayData) => {
+        starMapData.milkyWayData = milkyWayData;
+        starMapData.mw_back = getMwbackground(milkyWayData);
+      });
 
-    afterLoadJsonFromAllSettled(constellationsLinesData, (constellationsLinesData) => {
-      container.selectAll(parentElement + " .lines")
-        .data(constellationsLinesData.features)
-        .enter().append("path")
-        .attr("class", "constline");
-    });
+      extractData(constellationsData, (constellationsData) => {
+        starMapData.constellationsData = constellationsData;
+      });
 
-    afterLoadJsonFromAllSettled(starsData, (starsData) => {
-      container.selectAll(parentElement + " .stars")
-        .data(starsData.features)
-        .enter().append("path")
-        .attr("class", "star");
-    });
+      extractData(constellationsLinesData, (constellationsLinesData) => {
+        starMapData.constellationsLinesData = constellationsLinesData;
+      });
+
+      extractData(starsData, (starsData) => {
+        starMapData.starsData = starsData;
+      });
+    }
 
     if (cfg.lang && cfg.lang != "") apply(Celestial.setLanguage(cfg.lang));
     redraw();
@@ -220,23 +209,31 @@ Celestial.display = function (config) {
 
     //Draw all types of objects on the canvas
     if (cfg.mw.show) {
-      container.selectAll(parentElement + " .mw").each(function (d) { setStyle(cfg.mw.style); map(d); context.fill(); });
+      starMapData.milkyWayData.features.forEach((data) => {
+        setStyle(cfg.mw.style);
+        map(data);
+        context.fill();
+      });
       // paint mw-outside in background color
       if (cfg.transform !== "supergalactic" && cfg.background.opacity > 0.95)
-        container.selectAll(parentElement + " .mwbg").each(function (d) { setStyle(cfg.background); map(d); context.fill(); });
+        starMapData.mw_back.features.forEach((data) => {
+          setStyle(cfg.background);
+          map(data);
+          context.fill();
+        });
     }
 
     for (let key in cfg.lines) {
       if (cfg.lines[key].show !== true) continue;
       setStyle(cfg.lines[key]);
-      container.selectAll(parentElement + " ." + key).attr("d", map);
+      map(starMapData[key]());
       context.stroke();
     }
 
     if (cfg.constellations.lines) {
-      container.selectAll(parentElement + " .constline").each(function (d) {
-        setStyleA(d.properties.rank, cfg.constellations.lineStyle);
-        map(d);
+      starMapData.constellationsLinesData.features.forEach((data) => {
+        setStyle(data.properties.rank, cfg.constellations.lineStyle);
+        map(data);
         context.stroke();
       });
     }
@@ -244,7 +241,7 @@ Celestial.display = function (config) {
     drawOutline(true);
 
     if (cfg.constellations.names) {
-      container.selectAll(parentElement + " .constname").each(function (d) {
+      starMapData.constellationsData.features.forEach(function (d) {
         if (clip(d.geometry.coordinates)) {
           setStyleA(d.properties.rank, cfg.constellations.nameStyle);
           let pt = mapProjection(d.geometry.coordinates);
@@ -256,7 +253,7 @@ Celestial.display = function (config) {
 
     if (cfg.stars.show) {
       setStyle(cfg.stars.style);
-      container.selectAll(parentElement + " .star").each(function (d) {
+      starMapData.starsData.features.forEach(function (d) {
         if (clip(d.geometry.coordinates) && d.properties.mag <= cfg.stars.limit) {
           let pt = mapProjection(d.geometry.coordinates),
             r = starSize(d);
@@ -426,7 +423,7 @@ async function loadJson(url) {
   });
 }
 
-function afterLoadJsonFromAllSettled(data, callback) {
+function extractData(data, callback) {
   return data.status === "rejected" ? console.log(data.error) : callback(data.value);
 }
 
