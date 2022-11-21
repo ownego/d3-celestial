@@ -1,12 +1,8 @@
 /* global module, require, topojson, settings, bvcolor, projections, projectionTween, poles, eulerAngles, euler, getAngles, listConstellations, getMwbackground, getGridValues, Canvas, halfπ, $, px, has, hasCallback, isArray, isNumber, arrayfy, form, geo, fldEnable, setCenter, interpolateAngle, formats */
-let scopedContainer = null;
 
 let Celestial = {
   version: '0.7.35',
   data: [],
-  get container() {
-    return scopedContainer;
-  }
 };
 
 let ANIMDISTANCE = 0.035,  // Rotation animation threshold, ~2deg in radians
@@ -24,20 +20,13 @@ Celestial.display = function (config) {
   } else {
     window.starMapData = starMapData;
   }
-  let container = scopedContainer;
-
   //Mash config with default settings, todo: if globalConfig exists, make another one
   cfg = settings.set(config).applyDefaults(config);
 
   let parent = document.getElementById(cfg.container);
-  if (parent) {
-    parentElement = "#" + cfg.container;
-    let st = window.getComputedStyle(parent, null);
-    if (!parseInt(st.width) && !cfg.width) parent.style.width = px(parent.parentNode.clientWidth);
-  } else {
-    parentElement = "body";
-    parent = null;
-  }
+  parentElement = "#" + cfg.container;
+  let st = window.getComputedStyle(parent, null);
+  if (!parseInt(st.width) && !cfg.width) parent.style.width = px(parent.parentNode.clientWidth);
 
   let margin = [0, 0],
     width = getWidth(),
@@ -72,9 +61,6 @@ Celestial.display = function (config) {
 
   map = d3.geo.path().projection(mapProjection).context(context);
 
-  //parent div with id #celestial-map or body
-  if (container) container.selectAll(parentElement + " *").remove();
-  else container = d3.select(parentElement).append("container");
   canvas.attr("style", "cursor: default!important");
   setClip(projectionSetting.clip);
 
@@ -83,7 +69,7 @@ Celestial.display = function (config) {
   async function load() {
     //Background
     setClip(projectionSetting.clip);
-    container.append("path").datum(graticule.outline).attr("class", "outline");
+    starMapData.outline = graticule.outline;
     //Celestial planes
     graticule.minorStep([15, 10]);
     for (let key in cfg.lines) {
@@ -95,7 +81,6 @@ Celestial.display = function (config) {
           break;
       }
     }
-
 
     if (!starMapData.milkyWayData || !starMapData.mw_back || !starMapData.constellationsData || !starMapData.constellationsLinesData || !starMapData.starsData) {
       // Load data
@@ -277,7 +262,7 @@ Celestial.display = function (config) {
 
     mapProjection.rotate([0, 0]);
     setStyle(cfg.background);
-    container.selectAll(parentElement + " .outline").attr("d", map);
+    map(starMapData.outline())
     if (stroke === true) {
       context.globalAlpha = 1;
       context.stroke();
@@ -375,7 +360,6 @@ Celestial.display = function (config) {
   }
 
   // Exported objects and functions for adding data
-  scopedContainer = container;
   this.clip = clip;
   this.map = map;
   this.mapProjection = mapProjection;
@@ -400,7 +384,6 @@ Celestial.display = function (config) {
       ctr = getAngles(Celestial.zenith());
     }
     if (ctr) mapProjection.rotate(ctr);
-    container.selectAll(parentElement + " *").remove();
     load();
   };
   this.apply = function (config) { apply(config); };

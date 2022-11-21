@@ -33,8 +33,6 @@ let settings = {
                       // Default: desig or empty string for designations, other languages as used anywhere else
   culture: "",        // Constellation lines, default "iau"
   container: "celestial-map",   // ID of parent element, e.g. div
-  formcontainer: "celestial-form",
-  datepickcontainer: "celestial-date",
   datapath: "data/",  // Path/URL to data files, empty = subfolder 'data'
   stars: {
     show: true,    // Show stars
