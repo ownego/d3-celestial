@@ -222,13 +222,15 @@ let formats = {
         "fa": "Persian", 
         "ru": "Russian", 
         "es": "Spanish",
-        "tr": "Turkish"}
+        "tr": "Turkish",
+      }
     },
     "cn": {
       "names": {
         "name": "Proper name",
         "en": "English",
-        "pinyin": "Pinyin"}
+        "pinyin": "Pinyin",
+      }
     }             
   },
 };

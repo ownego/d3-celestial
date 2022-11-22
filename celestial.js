@@ -28,7 +28,7 @@ Celestial.display = function (config) {
   cfg = settings.set(config).applyDefaults(config);
 
   let parent = document.getElementById(cfg.container);
-  parentElement = "#" + cfg.container;
+  parentElement = `#${cfg.container}`;
   let st = window.getComputedStyle(parent, null);
   if (!parseInt(st.width) && !cfg.width) parent.style.width = px(parent.parentNode.clientWidth);
 
@@ -49,7 +49,7 @@ Celestial.display = function (config) {
     rotation = getAngles(cfg.center),
     path = cfg.datapath;
 
-  if (parentElement !== "body") parent.style.height = px(canvasheight);
+  parent.style.height = px(canvasheight);
 
   mapProjection = Celestial.projection(cfg.projection).rotate(rotation).translate([canvaswidth / 2, canvasheight / 2]).scale(scale);
 
@@ -76,17 +76,15 @@ Celestial.display = function (config) {
     starMapData.outline = graticule.outline;
     //Celestial planes
     graticule.minorStep([15, 10]);
-    for (let key in cfg.lines) {
-      switch (key) {
-        case "graticule":
-          starMapData[key] = graticule;
-          break;
-        default:
-          break;
-      }
-    }
+    starMapData.graticule = graticule;
 
-    if (!starMapData.milkyWayData || !starMapData.mw_back || !starMapData.constellationsData || !starMapData.constellationsLinesData || !starMapData.starsData) {
+    if (
+      !starMapData.milkyWayData ||
+      !starMapData.mw_back ||
+      !starMapData.constellationsData ||
+      !starMapData.constellationsLinesData ||
+      !starMapData.starsData
+    ) {
       // Load data
       let [milkyWayData, constellationsData, constellationsLinesData, starsData]
         = await Promise.allSettled([
@@ -154,19 +152,14 @@ Celestial.display = function (config) {
     if (d === 0) cTween = function () { return cfg.center; };
     else cTween = d3.geo.interpolate(cFrom, cfg.center);
     interval = (d !== 0) ? interval * d : interval * o; // duration scaled by ang. distance
-    let step = 1 / getMaxFPS();
-    let currentTLimit = step;
-    let epsilon = 1e-6;
     d3.select({}).transition().duration(interval).tween("center", function () {
       return function (t) {
-        if (t <= currentTLimit || t >= 1 - epsilon) return;
         let c = getAngles(cTween(t));
         c[2] = oTween(t);
         let z = t < 0.5 ? zTween(t) : zTween(1 - t);
         if (keep) c[1] = rot[1];
         mapProjection.scale(z);
         mapProjection.rotate(c);
-        currentTLimit = Math.ceil(t / step) * step;
         redraw();
       };
     }).transition().duration(0).tween("center", function () {
@@ -392,10 +385,6 @@ Celestial.display = function (config) {
   };
   this.apply = function (config) { apply(config); };
   this.rotate = function (config) { if (!config) return cfg.center; return rotate(config); };
-  this.color = function (type) {
-    if (!type) return "#000";
-    return "#000";
-  };
   this.starColor = starColor;
 
   load();
@@ -412,10 +401,6 @@ async function loadJson(url) {
 
 function extractData(data, callback) {
   return data.status === "rejected" ? console.log(data.error) : callback(data.value);
-}
-
-function getMaxFPS() {
-  return cfg.fps ? cfg.fps : 40;
 }
 
 //Export entire object if invoked by require
@@ -600,6 +585,7 @@ Celestial.ha = function(dt, lng, ra) {
   if (ha < 180) ha = ha + 360;
   return ha;
 };
+
 let hasCallback = false;
 
 Celestial.addCallback = function(dat) {
@@ -616,98 +602,26 @@ Celestial.runCallback = function(dat) {
 
 function getMwbackground(d) {
   // geoJson object to darken the mw-outside, prevent greying of whole map in some orientations 
-  let res = {'type': 'FeatureCollection', 'features': [ {'type': 'Feature', 
-              'geometry': { 'type': 'MultiPolygon', 'coordinates' : [] }
-            }]};
+  let res = {
+    'type': 'FeatureCollection',
+    'features': [
+      {
+        'type': 'Feature',
+        'geometry': {
+          'type': 'MultiPolygon',
+          'coordinates': []
+        }
+      }
+    ]
+  };
 
   // reverse the polygons, inside -> outside
   let l1 = d.features[0].geometry.coordinates[0];
   res.features[0].geometry.coordinates[0] = [];
-  for (let i=0; i<l1.length; i++) {
+  for (let i = 0; i < l1.length; i++) {
     res.features[0].geometry.coordinates[0][i] = l1[i].slice().reverse();
   }
 
-  return res;
-}
-
-function getGridValues(type, loc) {
-  let lines = [];
-  if (!loc) return [];
-  if (!isArray(loc)) loc = [loc];
-  //center, outline, values
-  for (let i=0; i < loc.length; i++) {
-    switch (loc[i]) {
-      case "center": 
-        if (type === "lat")
-          lines = lines.concat(getLine(type, cfg.center[0], "N"));
-        else
-          lines = lines.concat(getLine(type, cfg.center[1], "S")); 
-        break;
-      case "outline": 
-        if (type === "lon") { 
-          lines = lines.concat(getLine(type, cfg.center[1]-89.99, "S"));
-          lines = lines.concat(getLine(type, cfg.center[1]+89.99, "N"));
-        } else {
-					// TODO: hemi
-          lines = lines.concat(getLine(type, cfg.center[0]-179.99, "E"));
-          lines = lines.concat(getLine(type, cfg.center[0]+179.99, "W"));
-        }
-        break;
-      default: if (isNumber(loc[i])) {
-        if (type === "lat")
-          lines = lines.concat(getLine(type, loc[i], "N"));
-        else
-          lines = lines.concat(getLine(type, loc[i], "S")); 
-        break;        
-      }
-    }
-  }
-  //return [{coordinates, value, orientation}, ...]
-  return jsonGridValues(lines);
-}
-
-function jsonGridValues(lines) {
-  let res = [];
-  for (let i=0; i < lines.length; i++) {
-    let f = {type: "Feature", "id":i, properties: {}, geometry:{type:"Point"}};
-    f.properties.value = lines[i].value;
-    f.properties.orientation = lines[i].orientation;
-    f.geometry.coordinates = lines[i].coordinates;
-    res.push(f);
-  }
-  return res;
-}
-
-function getLine(type, loc, orient) {
-  let min, max, step, val, coord,
-      tp = type,
-      res = [],
-      lr = loc;
-  if (cfg.transform === "equatorial" && tp === "lon") tp = "ra";
-  
-  if (tp === "ra") {
-    min = 0; max = 23; step = 1;
-  } else if (tp === "lon") {
-    min = 0; max = 350; step = 10;    
-  } else {
-    min = -80; max = 80; step = 10;    
-  }
-  for (let i=min; i<=max; i+=step) {
-    let o = orient;
-    if (tp === "lat") {
-      coord = [lr, i];
-      val = i.toString() + "\u00b0";
-      if (i < 0) o += "S"; else o += "N";
-    } else if (tp === "ra") {
-      coord = [i * 15, lr];
-      val = i.toString() + "\u02b0";
-    } else {
-      coord = [i, lr];
-      val = i.toString() + "\u00b0";
-    }
-  
-    res.push({coordinates: coord, value: val, orientation: o});
-  }
   return res;
 }
 
@@ -934,13 +848,15 @@ let formats = {
         "fa": "Persian", 
         "ru": "Russian", 
         "es": "Spanish",
-        "tr": "Turkish"}
+        "tr": "Turkish",
+      }
     },
     "cn": {
       "names": {
         "name": "Proper name",
         "en": "English",
-        "pinyin": "Pinyin"}
+        "pinyin": "Pinyin",
+      }
     }             
   },
 };
@@ -968,107 +884,10 @@ function interpolateAngle(a1, a2, t) {
   return d3.interpolateNumber(a1 / deg2rad, a2 / deg2rad);
 }
 
-let Trig = {
-  sinh: function (val) { return (Math.pow(Math.E, val) - Math.pow(Math.E, -val)) / 2; },
-  cosh: function (val) { return (Math.pow(Math.E, val) + Math.pow(Math.E, -val)) / 2; },
-  tanh: function (val) { return 2.0 / (1.0 + Math.exp(-2.0 * val)) - 1.0; },
-  asinh: function (val) { return Math.log(val + Math.sqrt(val * val + 1)); },
-  acosh: function (val) { return Math.log(val + Math.sqrt(val * val - 1)); },
-  normalize0: function (val) { return ((val + Math.PI * 3) % (Math.PI * 2)) - Math.PI; },
-  normalize: function (val) { return ((val + Math.PI * 2) % (Math.PI * 2)); },
-  cartesian: function (p) {
-    let ϕ = p[0], θ = halfπ - p[1], r = p[2];
-    return { "x": r * Math.sin(θ) * Math.cos(ϕ), "y": r * Math.sin(θ) * Math.sin(ϕ), "z": r * Math.cos(θ) };
-  },
-  spherical: function (p) {
-    let r = Math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z),
-      θ = Math.atan(p.y / p.x),
-      ϕ = Math.acos(p.z / r);
-    return [θ / deg2rad, ϕ / deg2rad, r];
-  },
-  distance: function (p1, p2) {
-    return Math.acos(Math.sin(p1[1]) * Math.sin(p2[1]) + Math.cos(p1[1]) * Math.cos(p2[1]) * Math.cos(p1[0] - p2[0]));
-  }
-};
-
 let epsilon = 1e-6,
   halfPi = Math.PI / 2,
   quarterPi = Math.PI / 4,
   tau = Math.PI * 2;
-
-function cartesian(spherical) {
-  let lambda = spherical[0], phi = spherical[1], cosPhi = Math.cos(phi);
-  return [cosPhi * Math.cos(lambda), cosPhi * Math.sin(lambda), Math.sin(phi)];
-}
-
-function cartesianCross(a, b) {
-  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-}
-
-function cartesianNormalizeInPlace(d) {
-  let l = Math.sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
-  d[0] /= l; d[1] /= l; d[2] /= l;
-}
-
-function longitude(point) {
-  if (Math.abs(point[0]) <= Math.PI)
-    return point[0];
-  else
-    return sign(point[0]) * ((Math.abs(point[0]) + Math.PI) % tau - Math.PI);
-}
-
-function poligonContains(polygon, point) {
-  let lambda = longitude(point),
-    phi = point[1],
-    sinPhi = Math.sin(phi),
-    normal = [Math.sin(lambda), -Math.cos(lambda), 0],
-    angle = 0,
-    winding = 0,
-    sum = 0;
-
-  if (sinPhi === 1) phi = halfPi + epsilon;
-  else if (sinPhi === -1) phi = -halfPi - epsilon;
-
-  for (let i = 0, n = polygon.length; i < n; ++i) {
-    let ring = null, m = null;
-    if (!(m = (ring = polygon[i]).length)) continue;
-    let point0 = ring[m - 1],
-      lambda0 = longitude(point0),
-      phi0 = point0[1] / 2 + quarterPi,
-      sinPhi0 = Math.sin(phi0),
-      cosPhi0 = Math.cos(phi0),
-      point1, cosPhi1, sinPhi1, lambda1;
-
-    for (let j = 0; j < m; ++j, lambda0 = lambda1, sinPhi0 = sinPhi1, cosPhi0 = cosPhi1, point0 = point1) {
-      point1 = ring[j];
-      lambda1 = longitude(point1);
-      let phi1 = point1[1] / 2 + quarterPi;
-      sinPhi1 = Math.sin(phi1);
-      cosPhi1 = Math.cos(phi1);
-      let delta = lambda1 - lambda0,
-        sign = delta >= 0 ? 1 : -1,
-        absDelta = sign * delta,
-        antimeridian = absDelta > Math.PI,
-        k = sinPhi0 * sinPhi1;
-
-      sum += Math.atan2(k * sign * Math.sin(absDelta), cosPhi0 * cosPhi1 + k * Math.cos(absDelta));
-      angle += antimeridian ? delta + sign * tau : delta;
-
-      if ((antimeridian ^ lambda0) >= (lambda ^ lambda1) >= lambda) {
-        let arc = cartesianCross(cartesian(point0), cartesian(point1));
-        cartesianNormalizeInPlace(arc);
-        let intersection = cartesianCross(normal, arc);
-        cartesianNormalizeInPlace(intersection);
-        let phiArc = (antimeridian ^ delta >= 0 ? -1 : 1) * Math.asin(intersection[2]);
-        if (phi > phiArc || phi === phiArc && (arc[0] || arc[1])) {
-          winding += antimeridian ^ delta >= 0 ? 1 : -1;
-        }
-      }
-    }
-  }
-
-  return (angle < -epsilon || angle < epsilon && sum < -epsilon) ^ (winding & 1);
-}
 
 function geo(cfg) {
   let zenith = [0, 0],
@@ -1148,12 +967,6 @@ function geo(cfg) {
   };
 
   Celestial.zenith = () => zenith;
-  Celestial.nadir = () => {
-    let b = -zenith[1],
-      l = zenith[0] + 180;
-    if (l > 180) l -= 360;
-    return [l, b - 0.001];
-  };
 
   Object.defineProperty(Celestial, 'tz', {
     get: function () {

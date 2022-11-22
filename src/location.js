@@ -78,12 +78,6 @@ function geo(cfg) {
   };
 
   Celestial.zenith = () => zenith;
-  Celestial.nadir = () => {
-    let b = -zenith[1],
-      l = zenith[0] + 180;
-    if (l > 180) l -= 360;
-    return [l, b - 0.001];
-  };
 
   Object.defineProperty(Celestial, 'tz', {
     get: function () {

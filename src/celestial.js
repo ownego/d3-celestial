@@ -24,7 +24,7 @@ Celestial.display = function (config) {
   cfg = settings.set(config).applyDefaults(config);
 
   let parent = document.getElementById(cfg.container);
-  parentElement = "#" + cfg.container;
+  parentElement = `#${cfg.container}`;
   let st = window.getComputedStyle(parent, null);
   if (!parseInt(st.width) && !cfg.width) parent.style.width = px(parent.parentNode.clientWidth);
 
@@ -45,7 +45,7 @@ Celestial.display = function (config) {
     rotation = getAngles(cfg.center),
     path = cfg.datapath;
 
-  if (parentElement !== "body") parent.style.height = px(canvasheight);
+  parent.style.height = px(canvasheight);
 
   mapProjection = Celestial.projection(cfg.projection).rotate(rotation).translate([canvaswidth / 2, canvasheight / 2]).scale(scale);
 
@@ -72,17 +72,15 @@ Celestial.display = function (config) {
     starMapData.outline = graticule.outline;
     //Celestial planes
     graticule.minorStep([15, 10]);
-    for (let key in cfg.lines) {
-      switch (key) {
-        case "graticule":
-          starMapData[key] = graticule;
-          break;
-        default:
-          break;
-      }
-    }
+    starMapData.graticule = graticule;
 
-    if (!starMapData.milkyWayData || !starMapData.mw_back || !starMapData.constellationsData || !starMapData.constellationsLinesData || !starMapData.starsData) {
+    if (
+      !starMapData.milkyWayData ||
+      !starMapData.mw_back ||
+      !starMapData.constellationsData ||
+      !starMapData.constellationsLinesData ||
+      !starMapData.starsData
+    ) {
       // Load data
       let [milkyWayData, constellationsData, constellationsLinesData, starsData]
         = await Promise.allSettled([
@@ -150,19 +148,14 @@ Celestial.display = function (config) {
     if (d === 0) cTween = function () { return cfg.center; };
     else cTween = d3.geo.interpolate(cFrom, cfg.center);
     interval = (d !== 0) ? interval * d : interval * o; // duration scaled by ang. distance
-    let step = 1 / getMaxFPS();
-    let currentTLimit = step;
-    let epsilon = 1e-6;
     d3.select({}).transition().duration(interval).tween("center", function () {
       return function (t) {
-        if (t <= currentTLimit || t >= 1 - epsilon) return;
         let c = getAngles(cTween(t));
         c[2] = oTween(t);
         let z = t < 0.5 ? zTween(t) : zTween(1 - t);
         if (keep) c[1] = rot[1];
         mapProjection.scale(z);
         mapProjection.rotate(c);
-        currentTLimit = Math.ceil(t / step) * step;
         redraw();
       };
     }).transition().duration(0).tween("center", function () {
@@ -388,10 +381,6 @@ Celestial.display = function (config) {
   };
   this.apply = function (config) { apply(config); };
   this.rotate = function (config) { if (!config) return cfg.center; return rotate(config); };
-  this.color = function (type) {
-    if (!type) return "#000";
-    return "#000";
-  };
   this.starColor = starColor;
 
   load();
@@ -408,10 +397,6 @@ async function loadJson(url) {
 
 function extractData(data, callback) {
   return data.status === "rejected" ? console.log(data.error) : callback(data.value);
-}
-
-function getMaxFPS() {
-  return cfg.fps ? cfg.fps : 40;
 }
 
 //Export entire object if invoked by require
