@@ -58,7 +58,7 @@ let config = {
         // (see list below of languages codes available for stars)
         propernameStyle: { fill: "#ddddbb", font: "13px 'Palatino Linotype', Georgia, Times, 'Times Roman', serif", align: "right", baseline: "bottom" },
         propernameLimit: 1.5,  // Show proper names for stars brighter than propernameLimit
-        size: 5,       // Maximum size (radius) of star circle in pixels, this should base on width
+        size: 7,       // Maximum size (radius) of star circle in pixels, this should base on width
         exponent: -0.28, // Scale exponent for star size, larger = more linear
         data: 'stars.6.json' // Data source for stellar data,
         // number indicates limit magnitude

@@ -51,7 +51,7 @@ Celestial.display = function (config) {
 
   parent.style.height = px(canvasheight);
 
-  mapProjection = Celestial.projection(cfg.projection).rotate(rotation).translate([canvaswidth / 2, canvasheight / 2]).scale(scale);
+  mapProjection = Celestial.projection(cfg.projection).rotate(rotation).translate([canvaswidth / 2, canvasheight / 2]).scale(scale).clipAngle(90);
 
   let canvas = d3.select(parentElement).selectAll("canvas"),
     culture = (cfg.culture !== "" && cfg.culture !== "iau") ? cfg.culture : "";
@@ -66,13 +66,11 @@ Celestial.display = function (config) {
   map = d3.geo.path().projection(mapProjection).context(context);
 
   canvas.attr("style", "cursor: default!important");
-  setClip(projectionSetting.clip);
 
   geo(cfg);
 
   async function load() {
     //Background
-    setClip(projectionSetting.clip);
     starMapData.outline = graticule.outline;
     //Celestial planes
     graticule.minorStep([15, 10]);
@@ -304,11 +302,6 @@ Celestial.display = function (config) {
     context.textAlign = s.align || "left";
     context.textBaseline = s.baseline || "bottom";
     context.beginPath();
-  }
-
-  function setClip(setit) {
-    if (setit) { mapProjection.clipAngle(90); }
-    else { mapProjection.clipAngle(null); }
   }
 
   function filename(what, sub, ext) {
