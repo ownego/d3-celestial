@@ -1,5 +1,5 @@
 let config = {
-    disableAnimations: false,
+    disableAnimations: true,
     width: 1000,
     projection: "airy",    // The one and the only
     projectionRatio: null,   // Optional override for default projection ratio

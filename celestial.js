@@ -35,7 +35,13 @@ Celestial.display = function (config) {
   let margin = [0, 0],
     width = getWidth(),
     canvaswidth = width,
-    projectionSetting = getProjection(cfg.projection, cfg.projectionRatio);
+    projectionSetting = {
+      n: "Airy’s Minimum Error",
+      arg: Math.PI / 2,
+      scale: 360,
+      ratio: 1.0,
+      clip: true,
+    };
 
   if (!projectionSetting) return;
 
@@ -163,6 +169,7 @@ Celestial.display = function (config) {
     }).transition().duration(0).tween("center", function () {
       cfg.orientationfixed = oof;
       rotation = getAngles(cfg.center);
+      console.log(rotation);
       mapProjection.rotate(rotation);
       redraw();
     });
@@ -230,13 +237,11 @@ Celestial.display = function (config) {
       });
     }
 
-
     if (cfg.stars.show) {
       setStyle(cfg.stars.style);
       starMapData.starsData.features.forEach(function (d) {
         if (clip(d.geometry.coordinates) && d.properties.mag <= cfg.stars.limit) {
-          let pt = mapProjection(d.geometry.coordinates),
-            r = starSize(d);
+          let pt = mapProjection(d.geometry.coordinates), r = starSize(d);
           context.fillStyle = starColor(d);
           context.beginPath();
           context.arc(pt[0], pt[1], r, 0, 2 * Math.PI);
@@ -341,14 +346,6 @@ Celestial.display = function (config) {
     return w;
   }
 
-  function getProjection(p, ratioOverride) {
-    if (!has(projections, p)) return;
-    let res = projections[p];
-    if (!has(res, "ratio")) res.ratio = 2;  // Default w/h ratio 2:1    
-    res.ratio = ratioOverride ? ratioOverride : res.ratio;
-    return res;
-  }
-
   // Exported objects and functions for adding data
   this.clip = clip;
   this.map = map;
@@ -408,61 +405,34 @@ if (typeof module === "object" && module.exports) {
 }
 
 //Flipped projection generated on the fly
-Celestial.projection = function(projection) {
+Celestial.projection = function (projection) {
   let p, raw, forward;
-  
-  if (!has(projections, projection)) { throw new Error("Projection not supported: " + projection); }
-  p = projections[projection];    
 
-  if (p.arg !== null) {
-    raw = d3.geo[projection].raw(p.arg);
-  } else {
-    raw = d3.geo[projection].raw;  
-  }
-  
-  forward = function(λ, φ) {
+  p = {
+    n: "Airy’s Minimum Error",
+    arg: Math.PI / 2,
+    scale: 360,
+    ratio: 1.0,
+    clip: true,
+  };
+
+  raw = d3.geo.airy.raw(p.arg);
+
+  forward = function (λ, φ) {
     let coords = raw(-λ, φ);
     return coords;
   };
 
-  forward.invert = function(x, y) {
+  forward.invert = function (x, y) {
     try {
       let coords = raw.invert(x, y);
       coords[0] = coords && -coords[0];
       return coords;
-    } catch(e) { console.log(e); }
+    } catch (e) { console.log(e); }
   };
 
   return d3.geo.projection(forward);
 };
-
-
-function projectionTween(a, b) {
-  let prj = d3.geo.projection(raw).scale(1),
-      center = prj.center,
-      translate = prj.translate,
-      α;
-
-  function raw(λ, φ) {
-    let pa = a([λ *= 180 / Math.PI, φ *= 180 / Math.PI]), pb = b([λ, φ]);
-    return [(1 - α) * pa[0] + α * pb[0], (α - 1) * pa[1] - α * pb[1]];
-  }
-
-  prj.alpha = function(_) {
-    if (!arguments.length) return α;
-    α = +_;
-    let ca = a.center(), cb = b.center(),
-        ta = a.translate(), tb = b.translate();
-    
-    center([(1 - α) * ca[0] + α * cb[0], (1 - α) * ca[1] + α * cb[1]]);
-    translate([(1 - α) * ta[0] + α * tb[0], (1 - α) * ta[1] + α * tb[1]]);
-    return prj;
-  };
-
-  delete prj.translate;
-  delete prj.center;
-  return prj.alpha(0);
-}
 
 let eulerAngles = {
   "equatorial": [0.0, 0.0, 0.0]
@@ -483,7 +453,8 @@ function getAngles(coords) {
   if (coords === null || coords.length <= 0) return [0, 0, 0];
   let rot = eulerAngles.equatorial;
   if (!coords[2]) coords[2] = 0;
-  return [rot[0] - coords[0], rot[1] - coords[1], rot[2] + coords[2]];
+  let result = [rot[0] - coords[0], rot[1] - coords[1], rot[2] + coords[2]];
+  return result;
 }
 
 
@@ -531,6 +502,7 @@ horizontal.inverse = function(dt, hor, loc) {
   
   let ra = getMST(dt, loc[1]) - ha;
   //if (ra < 0) ra = ra + 360;
+  console.log(ra);
     
   return [ra, dec / deg2rad, 0];
 };
@@ -909,6 +881,8 @@ function geo(cfg) {
     
     Object.assign(config, settings.set());
     zenith = horizontal.inverse(dtc, [90, 0], geopos);
+    console.log(dtc);
+    console.log(geopos);
     zenith[2] = 0;
     if (config.follow === "zenith") {
       Celestial.rotate({ center: zenith });

@@ -1,4 +1,4 @@
-/* global module, require, topojson, settings, bvcolor, projections, projectionTween, poles, eulerAngles, euler, getAngles, listConstellations, getMwbackground, getGridValues, Canvas, halfπ, $, px, has, hasCallback, isArray, isNumber, arrayfy, form, geo, fldEnable, setCenter, interpolateAngle, formats */
+/* global module, require, topojson, settings, bvcolor, projections, poles, eulerAngles, euler, getAngles, listConstellations, getMwbackground, getGridValues, Canvas, halfπ, $, px, has, hasCallback, isArray, isNumber, arrayfy, form, geo, fldEnable, setCenter, interpolateAngle, formats */
 
 let Celestial = {
   version: '0.7.35',
@@ -31,7 +31,13 @@ Celestial.display = function (config) {
   let margin = [0, 0],
     width = getWidth(),
     canvaswidth = width,
-    projectionSetting = getProjection(cfg.projection, cfg.projectionRatio);
+    projectionSetting = {
+      n: "Airy’s Minimum Error",
+      arg: Math.PI / 2,
+      scale: 360,
+      ratio: 1.0,
+      clip: true,
+    };
 
   if (!projectionSetting) return;
 
@@ -226,13 +232,11 @@ Celestial.display = function (config) {
       });
     }
 
-
     if (cfg.stars.show) {
       setStyle(cfg.stars.style);
       starMapData.starsData.features.forEach(function (d) {
         if (clip(d.geometry.coordinates) && d.properties.mag <= cfg.stars.limit) {
-          let pt = mapProjection(d.geometry.coordinates),
-            r = starSize(d);
+          let pt = mapProjection(d.geometry.coordinates), r = starSize(d);
           context.fillStyle = starColor(d);
           context.beginPath();
           context.arc(pt[0], pt[1], r, 0, 2 * Math.PI);
@@ -335,14 +339,6 @@ Celestial.display = function (config) {
     else if (parent) w = parent.getBoundingClientRect().width - margin[0] * 2;
     else w = window.getBoundingClientRect().width - margin[0] * 2;
     return w;
-  }
-
-  function getProjection(p, ratioOverride) {
-    if (!has(projections, p)) return;
-    let res = projections[p];
-    if (!has(res, "ratio")) res.ratio = 2;  // Default w/h ratio 2:1    
-    res.ratio = ratioOverride ? ratioOverride : res.ratio;
-    return res;
   }
 
   // Exported objects and functions for adding data
