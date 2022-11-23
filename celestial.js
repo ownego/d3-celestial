@@ -84,7 +84,6 @@ Celestial.display = function (config) {
 
     if (
       !starMapData.milkyWayData ||
-      !starMapData.mw_back ||
       !starMapData.constellationsData ||
       !starMapData.constellationsLinesData ||
       !starMapData.starsData
@@ -100,7 +99,6 @@ Celestial.display = function (config) {
 
       extractData(milkyWayData, (milkyWayData) => {
         starMapData.milkyWayData = milkyWayData;
-        starMapData.mw_back = getMwbackground(milkyWayData);
       });
 
       extractData(constellationsData, (constellationsData) => {
@@ -128,48 +126,36 @@ Celestial.display = function (config) {
   function rotate(config) {
     let cFrom = cfg.center,
       rot = mapProjection.rotate(),
-      sc = mapProjection.scale(),
       interval = ANIMINTERVAL_R,
       keep = false,
-      cTween, zTween, oTween,
+      cTween,
       oof = cfg.orientationfixed;
 
     if (Round(rot[1], 1) === -Round(config.center[1], 1)) keep = true; //keep lat fixed if equal
     cfg = cfg.set(config);
     let d = Round(d3.geo.distance(cFrom, cfg.center), 2);
-    let o = d3.geo.distance([cFrom[2], 0], [cfg.center[2], 0]);
-    if ((d < ANIMDISTANCE && o < ANIMDISTANCE) || cfg.disableAnimations === true) {
+    if (d < ANIMDISTANCE || cfg.disableAnimations === true) {
       rotation = getAngles(cfg.center);
       mapProjection.rotate(rotation);
       redraw();
       return 0;
     }
-    // Zoom interpolator
-    if (sc > scale * ANIMSCALE) zTween = d3.interpolateNumber(sc, scale);
-    else zTween = function () { return sc; };
-    // Orientation interpolator
-    if (o === 0) oTween = function () { return rot[2]; };
-    else oTween = interpolateAngle(cFrom[2], cfg.center[2]);
     if (d > 3.14) cfg.center[0] -= 0.01; //180deg turn doesn't work well
     cfg.orientationfixed = false;
     // Rotation interpolator
     if (d === 0) cTween = function () { return cfg.center; };
     else cTween = d3.geo.interpolate(cFrom, cfg.center);
-    interval = (d !== 0) ? interval * d : interval * o; // duration scaled by ang. distance
+    interval = interval * d; // duration scaled by ang. distance
     d3.select({}).transition().duration(interval).tween("center", function () {
       return function (t) {
         let c = getAngles(cTween(t));
-        c[2] = oTween(t);
-        let z = t < 0.5 ? zTween(t) : zTween(1 - t);
         if (keep) c[1] = rot[1];
-        mapProjection.scale(z);
         mapProjection.rotate(c);
         redraw();
       };
     }).transition().duration(0).tween("center", function () {
       cfg.orientationfixed = oof;
       rotation = getAngles(cfg.center);
-      console.log(rotation);
       mapProjection.rotate(rotation);
       redraw();
     });
@@ -201,13 +187,6 @@ Celestial.display = function (config) {
         map(data);
         context.fill();
       });
-      // paint mw-outside in background color
-      if (cfg.transform !== "supergalactic" && cfg.background.opacity > 0.95)
-        starMapData.mw_back.features.forEach((data) => {
-          setStyle(cfg.background);
-          map(data);
-          context.fill();
-        });
     }
 
     for (let key in cfg.lines) {
@@ -453,8 +432,7 @@ function getAngles(coords) {
   if (coords === null || coords.length <= 0) return [0, 0, 0];
   let rot = eulerAngles.equatorial;
   if (!coords[2]) coords[2] = 0;
-  let result = [rot[0] - coords[0], rot[1] - coords[1], rot[2] + coords[2]];
-  return result;
+  return [rot[0] - coords[0], rot[1] - coords[1], rot[2] + coords[2]];
 }
 
 
@@ -502,7 +480,6 @@ horizontal.inverse = function(dt, hor, loc) {
   
   let ra = getMST(dt, loc[1]) - ha;
   //if (ra < 0) ra = ra + 360;
-  console.log(ra);
     
   return [ra, dec / deg2rad, 0];
 };
@@ -881,8 +858,6 @@ function geo(cfg) {
     
     Object.assign(config, settings.set());
     zenith = horizontal.inverse(dtc, [90, 0], geopos);
-    console.log(dtc);
-    console.log(geopos);
     zenith[2] = 0;
     if (config.follow === "zenith") {
       Celestial.rotate({ center: zenith });

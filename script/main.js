@@ -1,5 +1,5 @@
 let config = {
-    disableAnimations: true,
+    disableAnimations: false,
     width: 1000,
     projection: "airy",    // The one and the only
     projectionRatio: null,   // Optional override for default projection ratio
@@ -113,7 +113,7 @@ let config = {
         boundStyle: { stroke: "#cccc00", width: 0.5, opacity: 0.8, dash: [2, 4] }
     },
     mw: {
-        show: false,     // Show Milky Way as filled multi-polygon outlines, changable
+        show: true,     // Show Milky Way as filled multi-polygon outlines, changable
         style: { fill: "#ffffff", opacity: 0.15 }  // Style for MW layers
     },
     lines: {  // Display & styles for graticule & some planes
