@@ -6,7 +6,6 @@ let Celestial = {
 };
 
 let ANIMDISTANCE = 0.035,  // Rotation animation threshold, ~2deg in radians
-  ANIMSCALE = 1.4,       // Zoom animation threshold, scale factor
   ANIMINTERVAL_R = 1000; // Rotation duration scale in ms
 
 let cfg, mapProjection, parentElement, map;
@@ -47,7 +46,6 @@ Celestial.display = function (config) {
     scale = projectionSetting.scale * width / 1024,
     starbase = cfg.stars.size,
     starexp = cfg.stars.exponent,
-    adapt = 1,
     rotation = getAngles(cfg.center),
     path = cfg.datapath;
 
@@ -122,9 +120,7 @@ Celestial.display = function (config) {
   function rotate(config) {
     let cFrom = cfg.center,
       rot = mapProjection.rotate(),
-      interval = ANIMINTERVAL_R,
       keep = false,
-      cTween,
       oof = cfg.orientationfixed;
 
     if (Round(rot[1], 1) === -Round(config.center[1], 1)) keep = true; //keep lat fixed if equal
@@ -139,9 +135,8 @@ Celestial.display = function (config) {
     if (d > 3.14) cfg.center[0] -= 0.01; //180deg turn doesn't work well
     cfg.orientationfixed = false;
     // Rotation interpolator
-    if (d === 0) cTween = function () { return cfg.center; };
-    else cTween = d3.geo.interpolate(cFrom, cfg.center);
-    interval = interval * d; // duration scaled by ang. distance
+    const cTween = d === 0 ? () => cfg.center : d3.geo.interpolate(cFrom, cfg.center);
+    const interval = ANIMINTERVAL_R * d; // duration scaled by ang. distance
     d3.select({}).transition().duration(interval).tween("center", function () {
       return function (t) {
         let c = getAngles(cTween(t));
@@ -161,8 +156,6 @@ Celestial.display = function (config) {
   function redraw() {
     let rot = mapProjection.rotate();
 
-    if (cfg.adaptable) adapt = Math.sqrt(mapProjection.scale() / scale);
-    if (!adapt) adapt = 1;
     starbase = cfg.stars.size;
     starexp = cfg.stars.exponent;
 
@@ -294,7 +287,7 @@ Celestial.display = function (config) {
   function starSize(d) {
     let mag = d.properties.mag;
     if (mag === null) return 0.1;
-    let r = starbase * adapt * Math.exp(starexp * (mag + 2));
+    let r = starbase * Math.exp(starexp * (mag + 2));
     return Math.max(r, 0.1);
   }
 
@@ -350,7 +343,6 @@ Celestial.display = function (config) {
   };
   this.apply = function (config) { apply(config); };
   this.rotate = function (config) { if (!config) return cfg.center; return rotate(config); };
-  this.starColor = starColor;
 
   load();
 };
