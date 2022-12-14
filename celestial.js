@@ -195,7 +195,7 @@ Celestial.display = function (config) {
 
     if (cfg.constellations.lines) {
       starMapData.constellationsLinesData.features.forEach((data) => {
-        setStyle(data.properties.rank, cfg.constellations.lineStyle);
+        setStyleA(data.properties.rank, cfg.constellations.lineStyle);
         map(data);
         context.stroke();
       });
