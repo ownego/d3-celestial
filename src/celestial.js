@@ -1,4 +1,4 @@
-/* global module, require, topojson, settings, bvcolor, projections, poles, eulerAngles, euler, getAngles, listConstellations, getMwbackground, getGridValues, Canvas, halfπ, $, px, has, hasCallback, isArray, isNumber, arrayfy, form, geo, fldEnable, setCenter, formats */
+/* global module, require, topojson, settings, projections, poles, getAngles, listConstellations, getMwbackground, getGridValues, Canvas, halfπ, $, px, has, hasCallback, isArray, isNumber, arrayfy, form, geo, fldEnable, setCenter, formats */
 
 let Celestial = {
   version: '0.7.35',
@@ -31,14 +31,10 @@ Celestial.display = function (config) {
     width = getWidth(),
     canvaswidth = width,
     projectionSetting = {
-      n: "Airy’s Minimum Error",
-      arg: Math.PI / 2,
       scale: 360,
       ratio: 1.0,
       clip: true,
     };
-
-  if (!projectionSetting) return;
 
   let ratio = projectionSetting.ratio,
     height = Math.round(width / ratio),
@@ -51,7 +47,7 @@ Celestial.display = function (config) {
 
   parent.style.height = px(canvasheight);
 
-  mapProjection = Celestial.projection(cfg.projection).rotate(rotation).translate([canvaswidth / 2, canvasheight / 2]).scale(scale).clipAngle(90);
+  mapProjection = Celestial.projection().rotate(rotation).translate([canvaswidth / 2, canvasheight / 2]).scale(scale).clipAngle(90);
 
   let canvas = d3.select(parentElement).selectAll("canvas"),
     culture = (cfg.culture !== "" && cfg.culture !== "iau") ? cfg.culture : "";
@@ -212,9 +208,9 @@ Celestial.display = function (config) {
     if (cfg.stars.show) {
       setStyle(cfg.stars.style);
       starMapData.starsData.features.forEach(function (d) {
+        context.fillStyle = cfg.stars.style.fill;
         if (clip(d.geometry.coordinates) && d.properties.mag <= cfg.stars.limit) {
           let pt = mapProjection(d.geometry.coordinates), r = starSize(d);
-          context.fillStyle = starColor(d);
           context.beginPath();
           context.arc(pt[0], pt[1], r, 0, 2 * Math.PI);
           context.closePath();
@@ -227,7 +223,6 @@ Celestial.display = function (config) {
       Celestial.runCallback();
     }
   }
-
 
   function drawOutline(stroke) {
     let rot = mapProjection.rotate();
@@ -293,13 +288,6 @@ Celestial.display = function (config) {
     if (mag === null) return 0.1;
     let r = starbase * Math.exp(starexp * (mag + 2));
     return Math.max(r, 0.1);
-  }
-
-
-  function starColor(d) {
-    let bv = d.properties.bv;
-    if (!cfg.stars.colors || isNaN(bv)) { return cfg.stars.style.fill; }
-    return bvcolor(bv);
   }
 
   function constName(d) {

@@ -35,14 +35,10 @@ Celestial.display = function (config) {
     width = getWidth(),
     canvaswidth = width,
     projectionSetting = {
-      n: "Airy’s Minimum Error",
-      arg: Math.PI / 2,
       scale: 360,
       ratio: 1.0,
       clip: true,
     };
-
-  if (!projectionSetting) return;
 
   let ratio = projectionSetting.ratio,
     height = Math.round(width / ratio),
@@ -55,7 +51,7 @@ Celestial.display = function (config) {
 
   parent.style.height = px(canvasheight);
 
-  mapProjection = Celestial.projection(cfg.projection).rotate(rotation).translate([canvaswidth / 2, canvasheight / 2]).scale(scale).clipAngle(90);
+  mapProjection = Celestial.projection().rotate(rotation).translate([canvaswidth / 2, canvasheight / 2]).scale(scale).clipAngle(90);
 
   let canvas = d3.select(parentElement).selectAll("canvas"),
     culture = (cfg.culture !== "" && cfg.culture !== "iau") ? cfg.culture : "";
@@ -216,9 +212,9 @@ Celestial.display = function (config) {
     if (cfg.stars.show) {
       setStyle(cfg.stars.style);
       starMapData.starsData.features.forEach(function (d) {
+        context.fillStyle = cfg.stars.style.fill;
         if (clip(d.geometry.coordinates) && d.properties.mag <= cfg.stars.limit) {
           let pt = mapProjection(d.geometry.coordinates), r = starSize(d);
-          context.fillStyle = starColor(d);
           context.beginPath();
           context.arc(pt[0], pt[1], r, 0, 2 * Math.PI);
           context.closePath();
@@ -231,7 +227,6 @@ Celestial.display = function (config) {
       Celestial.runCallback();
     }
   }
-
 
   function drawOutline(stroke) {
     let rot = mapProjection.rotate();
@@ -297,13 +292,6 @@ Celestial.display = function (config) {
     if (mag === null) return 0.1;
     let r = starbase * Math.exp(starexp * (mag + 2));
     return Math.max(r, 0.1);
-  }
-
-
-  function starColor(d) {
-    let bv = d.properties.bv;
-    if (!cfg.stars.colors || isNaN(bv)) { return cfg.stars.style.fill; }
-    return bvcolor(bv);
   }
 
   function constName(d) {
@@ -391,20 +379,10 @@ if (typeof module === "object" && module.exports) {
 }
 
 //Flipped projection generated on the fly
-Celestial.projection = function (projection) {
-  let p, raw, forward;
+Celestial.projection = function () {
+  const raw = d3.geo.airy.raw(Math.PI / 2);
 
-  p = {
-    n: "Airy’s Minimum Error",
-    arg: Math.PI / 2,
-    scale: 360,
-    ratio: 1.0,
-    clip: true,
-  };
-
-  raw = d3.geo.airy.raw(p.arg);
-
-  forward = function (λ, φ) {
+  const forward = function (λ, φ) {
     let coords = raw(-λ, φ);
     return coords;
   };
@@ -414,47 +392,22 @@ Celestial.projection = function (projection) {
       let coords = raw.invert(x, y);
       coords[0] = coords && -coords[0];
       return coords;
-    } catch (e) { console.log(e); }
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   return d3.geo.projection(forward);
 };
 
-let eulerAngles = {
-  "equatorial": [0.0, 0.0, 0.0]
-};
-
-let poles = {
-  "equatorial": [0.0, 90.0]
-};
-
-Celestial.eulerAngles = function () { return eulerAngles; };
-Celestial.poles = function () { return poles; };
-
-let τ = Math.PI * 2,
-  halfπ = Math.PI / 2,
+let halfπ = Math.PI / 2,
   deg2rad = Math.PI / 180;
 
 function getAngles(coords) {
   if (coords === null || coords.length <= 0) return [0, 0, 0];
-  let rot = eulerAngles.equatorial;
   if (!coords[2]) coords[2] = 0;
-  return [rot[0] - coords[0], rot[1] - coords[1], rot[2] + coords[2]];
+  return [-coords[0], -coords[1], coords[2]];
 }
-
-
-let euler = {
-  "init": function () {
-    for (let key in this) {
-      if (this[key].constructor == Array) {
-        this[key] = this[key].map(function (val) { return val * deg2rad; });
-      }
-    }
-  },
-};
-
-euler.init();
-Celestial.euler = function () { return euler; };
 
 let horizontal = function(dt, pos, loc) {
   //dt: datetime, pos: celestial coordinates [lat,lng], loc: location [lat,lng]  
@@ -547,6 +500,7 @@ Celestial.runCallback = function(dat) {
   Celestial.callback();
   hasCallback = true;
 };
+
 
 // Central configuration object
 let globalConfig = {};
@@ -727,23 +681,6 @@ function arrayfy(o) {
 }
 
 Celestial.settings = function () { return settings; };
-
-//b-v color index to rgb color value scale
-let bvcolor = 
-  d3.scale.quantize().domain([3.347, -0.335]) //main sequence <= 1.7
-    .range([ '#ff4700', '#ff4b00', '#ff4f00', '#ff5300', '#ff5600', '#ff5900', '#ff5b00', '#ff5d00', '#ff6000', '#ff6300', '#ff6500', '#ff6700', '#ff6900', '#ff6b00', '#ff6d00', '#ff7000', '#ff7300', '#ff7500', '#ff7800', '#ff7a00', '#ff7c00', '#ff7e00', '#ff8100', '#ff8300', '#ff8506', '#ff870a', '#ff8912', '#ff8b1a', '#ff8e21', '#ff9127', '#ff932c', '#ff9631', '#ff9836', '#ff9a3c', '#ff9d3f', '#ffa148', '#ffa34b', '#ffa54f', '#ffa753', '#ffa957', '#ffab5a', '#ffad5e', '#ffb165', '#ffb269', '#ffb46b', '#ffb872', '#ffb975', '#ffbb78', '#ffbe7e', '#ffc184', '#ffc489', '#ffc78f', '#ffc892', '#ffc994', '#ffcc99', '#ffce9f', '#ffd1a3', '#ffd3a8', '#ffd5ad', '#ffd7b1', '#ffd9b6', '#ffdbba', '#ffddbe', '#ffdfc2', '#ffe1c6', '#ffe3ca', '#ffe4ce', '#ffe8d5', '#ffe9d9', '#ffebdc', '#ffece0', '#ffefe6', '#fff0e9', '#fff2ec', '#fff4f2', '#fff5f5', '#fff6f8', '#fff9fd', '#fef9ff', '#f9f6ff', '#f6f4ff', '#f3f2ff', '#eff0ff', '#ebeeff', '#e9edff', '#e6ebff', '#e3e9ff', '#e0e7ff', '#dee6ff', '#dce5ff', '#d9e3ff', '#d7e2ff', '#d3e0ff', '#c9d9ff', '#bfd3ff', '#b7ceff', '#afc9ff', '#a9c5ff', '#a4c2ff', '#9fbfff', '#9bbcff']);
- 
-/* Default parameters for each supported projection
-     arg: constructor argument, if any 
-     scale: scale parameter so that they all have ~equal width, normalized to 1024 pixels
-     ratio: width/height ratio, 2.0 if none
-     clip: projection clipped to 90 degrees from center, otherwise to antimeridian
-*/
-let projections = {
-  "airy": {n:"Airy’s Minimum Error", arg:Math.PI/2, scale:360, ratio:1.0, clip:true},
-};
-
-Celestial.projections = function () { return projections; };
 
 let formats = {
   "constellations": {
