@@ -121,6 +121,10 @@ Celestial.display = function (config) {
     redraw();
   }
 
+  function applyWithoutRedraw(config) {
+    cfg = settings.set(config);
+  }
+
   function rotate(config) {
     let cFrom = cfg.center,
       rot = mapProjection.rotate(),
@@ -345,8 +349,19 @@ Celestial.display = function (config) {
     if (ctr) mapProjection.rotate(ctr);
     load();
   };
-  this.apply = function (config) { apply(config); };
-  this.rotate = function (config) { if (!config) return cfg.center; return rotate(config); };
+
+  this.apply = function (config) {
+    apply(config);
+  };
+
+  this.applyWithoutRedraw = function (config) {
+    applyWithoutRedraw(config);
+  }
+
+  this.rotate = function (config) {
+    if (!config) return cfg.center;
+    return rotate(config);
+  };
 
   load();
 };
@@ -847,7 +862,7 @@ function geo(cfg) {
 
   function go() {
     let dtc = new Date(date.valueOf() - (timeZone - localZone) * 60000);
-    
+
     Object.assign(config, settings.set());
     zenith = horizontal.inverse(dtc, [90, 0], geopos);
     zenith[2] = 0;
@@ -899,6 +914,15 @@ function geo(cfg) {
       else setPosition(geopos);
     }
   };
+
+  Celestial.skyview = (loc, newDate, tz) => {
+    if (isValidLocation(loc) && isValidTimezone(tz)) {
+      geopos = loc.slice();
+      timeZone = tz;
+      date.setTime(newDate.valueOf());
+      go();
+    }
+  }
 
   Celestial.zenith = () => zenith;
 

@@ -117,6 +117,10 @@ Celestial.display = function (config) {
     redraw();
   }
 
+  function applyWithoutRedraw(config) {
+    cfg = settings.set(config);
+  }
+
   function rotate(config) {
     let cFrom = cfg.center,
       rot = mapProjection.rotate(),
@@ -341,8 +345,19 @@ Celestial.display = function (config) {
     if (ctr) mapProjection.rotate(ctr);
     load();
   };
-  this.apply = function (config) { apply(config); };
-  this.rotate = function (config) { if (!config) return cfg.center; return rotate(config); };
+
+  this.apply = function (config) {
+    apply(config);
+  };
+
+  this.applyWithoutRedraw = function (config) {
+    applyWithoutRedraw(config);
+  }
+
+  this.rotate = function (config) {
+    if (!config) return cfg.center;
+    return rotate(config);
+  };
 
   load();
 };

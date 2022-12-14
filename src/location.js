@@ -24,7 +24,7 @@ function geo(cfg) {
 
   function go() {
     let dtc = new Date(date.valueOf() - (timeZone - localZone) * 60000);
-    
+
     Object.assign(config, settings.set());
     zenith = horizontal.inverse(dtc, [90, 0], geopos);
     zenith[2] = 0;
@@ -76,6 +76,15 @@ function geo(cfg) {
       else setPosition(geopos);
     }
   };
+
+  Celestial.skyview = (loc, newDate, tz) => {
+    if (isValidLocation(loc) && isValidTimezone(tz)) {
+      geopos = loc.slice();
+      timeZone = tz;
+      date.setTime(newDate.valueOf());
+      go();
+    }
+  }
 
   Celestial.zenith = () => zenith;
 
