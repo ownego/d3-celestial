@@ -25,7 +25,6 @@ this.createCelestialFromConfig = createCelestialFromConfig;
     './src/transform.js',
     './src/horizontal.js',
     './src/add.js',
-    './src/get.js',
     './src/config.js',
     './src/util.js',
     './src/location.js',

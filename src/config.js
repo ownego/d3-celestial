@@ -234,8 +234,3 @@ let formats = {
     }             
   },
 };
-
-let formats_all = {
-  "iau": Object.keys(formats.constellations.iau.names).filter( function(value, index, self) { return self.indexOf(value) === index; } ),
-  "cn":  Object.keys(formats.constellations.cn.names).filter( function(value, index, self) { return self.indexOf(value) === index; } )
-};

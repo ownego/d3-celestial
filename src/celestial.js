@@ -1,4 +1,4 @@
-/* global module, require, topojson, settings, bvcolor, projections, poles, eulerAngles, euler, getAngles, listConstellations, getMwbackground, getGridValues, Canvas, halfπ, $, px, has, hasCallback, isArray, isNumber, arrayfy, form, geo, fldEnable, setCenter, interpolateAngle, formats */
+/* global module, require, topojson, settings, bvcolor, projections, poles, eulerAngles, euler, getAngles, listConstellations, getMwbackground, getGridValues, Canvas, halfπ, $, px, has, hasCallback, isArray, isNumber, arrayfy, form, geo, fldEnable, setCenter, formats */
 
 let Celestial = {
   version: '0.7.35',
