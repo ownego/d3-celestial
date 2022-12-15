@@ -33,32 +33,27 @@ Celestial.display = function (config) {
 
   let margin = [0, 0],
     width = getWidth(),
-    canvaswidth = width,
     projectionSetting = {
       scale: 360,
-      ratio: 1.0,
       clip: true,
     };
 
-  let ratio = projectionSetting.ratio,
-    height = Math.round(width / ratio),
-    canvasheight = Math.round(canvaswidth / ratio),
-    scale = projectionSetting.scale * width / 1024,
+  let scale = projectionSetting.scale * width / 1024,
     starbase = cfg.stars.size,
     starexp = cfg.stars.exponent,
     rotation = getAngles(cfg.center),
     path = cfg.datapath;
 
-  parent.style.height = px(canvasheight);
+  parent.style.height = px(width);
 
-  mapProjection = Celestial.projection().rotate(rotation).translate([canvaswidth / 2, canvasheight / 2]).scale(scale).clipAngle(90);
+  mapProjection = Celestial.projection().rotate(rotation).translate([width / 2, width / 2]).scale(scale).clipAngle(90);
 
   let canvas = d3.select(parentElement).selectAll("canvas"),
     culture = (cfg.culture !== "" && cfg.culture !== "iau") ? cfg.culture : "";
 
   if (canvas[0].length === 0) canvas = d3.select(parentElement).append("canvas");
   //canvas.attr("width", width).attr("height", height);
-  canvas.style("width", px(canvaswidth)).style("height", px(canvasheight)).attr("width", canvaswidth).attr("height", canvasheight);
+  canvas.style("width", px(width)).style("height", px(width)).attr("width", width).attr("height", width);
   let context = canvas.node().getContext("2d");
 
   let graticule = d3.geo.graticule().minorStep([15, 10]);
@@ -299,7 +294,7 @@ Celestial.display = function (config) {
   }
 
   function clear() {
-    context.clearRect(0, 0, canvaswidth + margin[0], canvasheight + margin[1]);
+    context.clearRect(0, 0, width + margin[0], width + margin[1]);
   }
 
   function getWidth() {
@@ -316,7 +311,7 @@ Celestial.display = function (config) {
   this.mapProjection = mapProjection;
   this.context = context;
   this.metrics = function () {
-    return { "width": width, "height": height, "margin": margin, "scale": mapProjection.scale() };
+    return { "width": width, "margin": margin, "scale": mapProjection.scale() };
   };
   this.setStyle = setStyle;
   this.setTextStyle = setTextStyle;
