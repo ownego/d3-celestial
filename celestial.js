@@ -1,5 +1,5 @@
 // Copyright 2015-2020 Olaf Frohn https://github.com/ofrohn, see LICENSE
-(!function () {
+
     function createCelestialFromConfig(cfg) {
       function createCelestial() {
     
@@ -5998,5 +5998,4 @@ Object.defineProperty(exports, '__esModule', { value: true });
   Celestial.display(cfg);
   return Celestial;
 }
-this.createCelestialFromConfig = createCelestialFromConfig;
-}());
+export { createCelestialFromConfig };
