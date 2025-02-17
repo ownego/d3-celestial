@@ -6,7 +6,7 @@ var shell = require('shelljs/make'),
   //zlib = require('zlib'),
   version = require('./package.json').version,
   copy = "// Copyright 2015-2020 Olaf Frohn https://github.com/ofrohn, see LICENSE\n",
-  begin = `
+  begin = `!(function () {
     function createCelestialFromConfig(cfg) {
       function createCelestial() {
     `,
@@ -17,8 +17,7 @@ var shell = require('shelljs/make'),
   return Celestial;
 }
 window.createCelestialFromConfig = createCelestialFromConfig;
-export { createCelestialFromConfig };
-`,
+}());`,
   filename = './celestial',
   filelist = [
     './src/celestial.js',
