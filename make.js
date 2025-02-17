@@ -17,6 +17,7 @@ var shell = require('shelljs/make'),
   return Celestial;
 }
 this.createCelestialFromConfig = createCelestialFromConfig;
+window.createCelestialFromConfig = createCelestialFromConfig;
 }());`,
   filename = './celestial',
   filelist = [

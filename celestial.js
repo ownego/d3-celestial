@@ -5999,4 +5999,5 @@ Object.defineProperty(exports, '__esModule', { value: true });
   return Celestial;
 }
 this.createCelestialFromConfig = createCelestialFromConfig;
+window.createCelestialFromConfig = createCelestialFromConfig;
 }());
